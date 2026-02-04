@@ -6,7 +6,7 @@ import { useMediaQuery } from '../hooks/useMediaQuery';
 import PlayerForm from './PlayerForm';
 import AuthButton from './AuthButton';
 import { useTactics } from '../hooks/useTactics';
-import { Pencil, Plus, Save } from 'lucide-react';
+import { Pencil, Plus, Save, Share2, Lock } from 'lucide-react';
 
 const Board = () => {
     // Logic coordinates are always Vertical (0-100 X, 0-100 Y)
@@ -22,7 +22,7 @@ const Board = () => {
         { id: 'p7', number: 7, name: 'FWD', x: 50, y: 20, color: 'bg-red-600' },
     ];
 
-    const { players, setPlayers, saveTactics, user } = useTactics(initialPlayers);
+    const { players, setPlayers, saveTactics, user, isReadOnly, error } = useTactics(initialPlayers);
 
     const [activeId, setActiveId] = useState(null);
     const [selectedPlayerId, setSelectedPlayerId] = useState(null);
@@ -42,19 +42,19 @@ const Board = () => {
     );
 
     const handleDragStart = (event) => {
+        if (isReadOnly) return;
         setActiveId(event.active.id);
     };
 
     const handleDragEnd = (event) => {
+        if (isReadOnly) return;
         const { active, delta } = event;
         const id = active.id;
 
-        // Get field dimensions to calculate percentage delta
         const field = document.getElementById('field-container');
         if (!field) return;
         const rect = field.getBoundingClientRect();
 
-        // Calculate percentage change based on VISUAL dimensions
         const deltaPercentX = (delta.x / rect.width) * 100;
         const deltaPercentY = (delta.y / rect.height) * 100;
 
@@ -63,16 +63,8 @@ const Board = () => {
                 let newX, newY;
 
                 if (orientation === 'horizontal') {
-                    // Mapping from Horizontal Visual to Vertical Logical
-                    // Visual X (Left->Right) maps to Logical Y (0->100).
-                    // Visual Y (Top->Bottom) maps to Logical X (100 -> 0) (Top visual is Right logical).
-
-                    // So:
-                    // Logical Y change = Visual X change
-                    // Logical X change = - Visual Y change
                     newY = p.y + deltaPercentX;
                     newX = p.x - deltaPercentY; // Inverted axis
-
                 } else {
                     // Vertical (Standard)
                     newX = p.x + deltaPercentX;
@@ -92,6 +84,7 @@ const Board = () => {
     };
 
     const handleAddPlayer = (playerData) => {
+        if (isReadOnly) return;
         const newPlayer = {
             id: `p${Date.now()}`,
             ...playerData,
@@ -103,30 +96,33 @@ const Board = () => {
     };
 
     const handleUpdatePlayer = (updatedData) => {
+        if (isReadOnly) return;
         setPlayers(players.map(p => p.id === updatedData.id ? { ...p, ...updatedData } : p));
         setSelectedPlayerId(null);
     };
 
     const handleDeletePlayer = (id) => {
+        if (isReadOnly) return;
         setPlayers(players.filter(p => p.id !== id));
         setSelectedPlayerId(null);
     };
 
     const handleSave = async () => {
+        if (isReadOnly) return;
         setIsSaving(true);
         await saveTactics(players);
         setIsSaving(false);
     };
 
+    const handleShare = () => {
+        if (!user) return alert("You must be logged in to share.");
+        const url = `${window.location.origin}?uid=${user.uid}`;
+        navigator.clipboard.writeText(url);
+        alert("Enlace copiado! Envíalo a tu equipo: " + url);
+    };
+
     const getVisualPosition = (logicalX, logicalY) => {
         if (orientation === 'horizontal') {
-            // Logic: Left Goal (Y=0) is Left Screen.
-            // Logic: Right Goal (Y=100) is Right Screen.
-            // Logic: Left Sideline (X=0) is Bottom Screen.
-            // Logic: Right Sideline (X=100) is Top Screen.
-
-            // Visual X = Logical Y
-            // Visual Y = 100 - Logical X
             return { x: logicalY, y: 100 - logicalX };
         }
         return { x: logicalX, y: logicalY };
@@ -140,15 +136,33 @@ const Board = () => {
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
         >
-            <div className="flex flex-col md:flex-row h-screen p-4 gap-4">
+            {/* Header for Auth - Absolute positioned on Mobile to sit "above right" */}
+            <div className={`fixed top-4 right-4 z-50 ${isDesktop ? 'right-8' : ''}`}>
+                <div className="backdrop-blur-md bg-black/30 rounded-lg">
+                    <AuthButton />
+                </div>
+            </div>
+
+            <div className="flex flex-col md:flex-row h-screen p-4 gap-4 md:pt-4 pt-16">
                 {/* Field Area */}
                 <div className="flex-1 flex justify-center items-center relative" onClick={() => { setSelectedPlayerId(null); setShowAddForm(false); }}>
-                    <div id="field-container" className={`w-full relative transition-all duration-500 ${isDesktop ? 'max-w-5xl' : 'max-w-md'}`} onClick={(e) => e.stopPropagation()}>
+                    {/* Added 'scale-90' to reduce size by 10% on mobile as requested, and removed instruction text */}
+                    <div
+                        id="field-container"
+                        className={`w-full relative transition-all duration-500 scale-90 md:scale-100 ${isDesktop ? 'max-w-5xl' : 'max-w-md'}`}
+                        onClick={(e) => e.stopPropagation()}
+                    >
                         <Field orientation={orientation}>
                             {players.map((p) => {
                                 const visualPos = getVisualPosition(p.x, p.y);
                                 return (
-                                    <div key={p.id} onClick={(e) => { e.stopPropagation(); setSelectedPlayerId(p.id); setShowAddForm(false); }}>
+                                    <div key={p.id} onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (!isReadOnly) {
+                                            setSelectedPlayerId(p.id);
+                                            setShowAddForm(false);
+                                        }
+                                    }}>
                                         <Player
                                             id={p.id}
                                             number={p.number}
@@ -177,40 +191,62 @@ const Board = () => {
                 </div>
 
                 {/* Sidebar / Tools */}
-                <div className="w-full md:w-80 bg-slate-900/90 backdrop-blur-xl rounded-xl p-4 shadow-2xl border border-white/10 flex flex-col h-1/3 md:h-auto overflow-hidden">
-                    <div className="mb-4">
-                        <AuthButton />
-                    </div>
+                <div className="w-full md:w-80 bg-slate-900/90 backdrop-blur-xl rounded-xl p-4 shadow-2xl border border-white/10 flex flex-col h-1/3 md:h-auto overflow-hidden text-white">
+                    {/* Auth Button removed from here, moved to float top right */}
+
+                    {error && (
+                        <div className="bg-red-500/20 text-red-200 p-2 rounded text-sm mb-4 border border-red-500/30">
+                            {error}
+                        </div>
+                    )}
+
+                    {isReadOnly && (
+                        <div className="bg-blue-500/20 text-blue-200 p-2 rounded text-sm mb-4 border border-blue-500/30 flex items-center gap-2">
+                            <Lock size={14} />
+                            Vista Solo Lectura
+                        </div>
+                    )}
 
                     <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-4">
                         <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                            Squad <span className="text-xs bg-white/10 px-2 py-0.5 rounded text-gray-400">{players.length}</span>
+                            Equipo <span className="text-xs bg-white/10 px-2 py-0.5 rounded text-gray-400">{players.length}</span>
                         </h2>
                         <div className="flex gap-2">
-                            {user && (
+                            {user && !isReadOnly && (
+                                <>
+                                    <button
+                                        onClick={handleShare}
+                                        className="bg-indigo-600 hover:bg-indigo-500 text-white p-2 rounded-lg transition-colors shadow-lg"
+                                        title="Compartir Alineación"
+                                    >
+                                        <Share2 size={20} />
+                                    </button>
+                                    <button
+                                        onClick={handleSave}
+                                        disabled={isSaving}
+                                        className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white p-2 rounded-lg transition-colors shadow-lg"
+                                        title="Guardar en la Nube"
+                                    >
+                                        <Save size={20} className={isSaving ? 'animate-spin' : ''} />
+                                    </button>
+                                </>
+                            )}
+                            {!isReadOnly && (
                                 <button
-                                    onClick={handleSave}
-                                    disabled={isSaving}
-                                    className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white p-2 rounded-lg transition-colors shadow-lg"
-                                    title="Save to Cloud"
+                                    onClick={() => { setShowAddForm(true); setSelectedPlayerId(null); }}
+                                    className="bg-green-600 hover:bg-green-500 text-white p-2 rounded-lg transition-colors shadow-lg shadow-green-900/20"
+                                    title="Agregar Jugador"
                                 >
-                                    <Save size={20} className={isSaving ? 'animate-spin' : ''} />
+                                    <Plus size={20} />
                                 </button>
                             )}
-                            <button
-                                onClick={() => { setShowAddForm(true); setSelectedPlayerId(null); }}
-                                className="bg-green-600 hover:bg-green-500 text-white p-2 rounded-lg transition-colors shadow-lg shadow-green-900/20"
-                                title="Add Player"
-                            >
-                                <Plus size={20} />
-                            </button>
                         </div>
                     </div>
 
                     <div className="flex-1 overflow-y-auto pr-1 space-y-3 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
 
                         {/* Edit/Add Form takes priority */}
-                        {(selectedPlayerId || showAddForm) ? (
+                        {(!isReadOnly && (selectedPlayerId || showAddForm)) ? (
                             <PlayerForm
                                 selectedPlayer={selectedPlayer}
                                 onSave={selectedPlayerId ? handleUpdatePlayer : handleAddPlayer}
@@ -220,23 +256,23 @@ const Board = () => {
                             />
                         ) : (
                             <div className="grid grid-cols-1 gap-2">
-                                <p className="text-xs text-gray-500 mb-2 italic">Click a player on the field to edit.</p>
+                                {/* Removed instruction text as requested */}
                                 {players.map(p => (
                                     <div
                                         key={p.id}
-                                        onClick={() => setSelectedPlayerId(p.id)}
-                                        className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all hover:bg-white/5
+                                        onClick={() => !isReadOnly && setSelectedPlayerId(p.id)}
+                                        className={`flex items-center gap-3 p-3 rounded-lg border transition-all hover:bg-white/5
                                             ${selectedPlayerId === p.id ? 'bg-white/10 border-green-500/50' : 'bg-slate-800/50 border-white/5'}
+                                            ${isReadOnly ? 'cursor-default' : 'cursor-pointer'}
                                         `}
                                     >
                                         <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white border border-white/20 ${p.color}`}>
                                             {p.number}
                                         </div>
                                         <div className="flex-1">
-                                            <p className="font-semibold text-sm text-white">{p.name || 'Unnamed'}</p>
-                                            <p className="text-xs text-gray-400 font-mono">ID: {p.id}</p>
+                                            <p className="font-semibold text-sm text-white">{p.name || 'Sin Nombre'}</p>
                                         </div>
-                                        <Pencil size={14} className="text-gray-500 group-hover:text-white" />
+                                        {!isReadOnly && <Pencil size={14} className="text-gray-500 group-hover:text-white" />}
                                     </div>
                                 ))}
                             </div>
