@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, Trash2, Upload } from 'lucide-react';
+import { X, Save, Trash2, Upload, User, Hash, MapPin } from 'lucide-react';
 import { storage } from '../firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
@@ -15,12 +15,11 @@ const PlayerForm = ({ selectedPlayer, onSave, onDelete, onCancel, onClose }) => 
     useEffect(() => {
         if (selectedPlayer) {
             setName(selectedPlayer.name);
-            setNumber(selectedPlayer.number);
-            setColor(selectedPlayer.color);
+            setNumber(selectedPlayer.number || '');
+            setColor(selectedPlayer.color || 'bg-blue-600');
             setPositionType(selectedPlayer.positionType || 'MED');
             setPreviewUrl(selectedPlayer.imageUrl || null);
         } else {
-            // Defaults
             setName('');
             setNumber('');
             setPositionType('MED');
@@ -31,11 +30,11 @@ const PlayerForm = ({ selectedPlayer, onSave, onDelete, onCancel, onClose }) => 
 
     const handlePositionChange = (type) => {
         setPositionType(type);
-        // Auto-set color based on position (can be overridden)
+        // Auto-set color based on position hidden but kept for logic
         switch (type) {
             case 'ARQ': setColor('bg-yellow-500'); break;
             case 'DEF': setColor('bg-blue-600'); break;
-            case 'MED': setColor('bg-blue-600'); break;
+            case 'MED': setColor('bg-emerald-600'); break;
             case 'DEL': setColor('bg-red-600'); break;
             default: setColor('bg-blue-600');
         }
@@ -56,33 +55,25 @@ const PlayerForm = ({ selectedPlayer, onSave, onDelete, onCancel, onClose }) => 
 
         if (imageFile) {
             try {
-                // Upload to Firebase Storage
-                // Path: player_images/{timestamp}_{filename}
                 const storageRef = ref(storage, `player_images/${Date.now()}_${imageFile.name}`);
                 await uploadBytes(storageRef, imageFile);
                 imageUrl = await getDownloadURL(storageRef);
             } catch (err) {
                 console.error("Upload failed", err);
-                alert("Error al subir imagen. (¿Habilitaste Storage en Firebase Console?)");
+                alert("Error al subir imagen.");
             }
         }
 
         onSave({
             id: selectedPlayer ? selectedPlayer.id : undefined,
             name,
-            number: parseInt(number),
+            number: number ? parseInt(number) : 0,
             color,
             positionType,
             imageUrl
         });
         setUploading(false);
     };
-
-    const colors = [
-        'bg-blue-600', 'bg-red-600', 'bg-green-600',
-        'bg-yellow-500', 'bg-orange-500', 'bg-purple-600',
-        'bg-slate-900', 'bg-gray-400', 'bg-white text-black'
-    ];
 
     const positionOptions = [
         { id: 'ARQ', label: 'Arquero' },
@@ -92,93 +83,98 @@ const PlayerForm = ({ selectedPlayer, onSave, onDelete, onCancel, onClose }) => 
     ];
 
     return (
-        <div className="bg-slate-800/80 p-4 rounded-lg border border-white/10 animate-fade-in backdrop-blur-md">
-            <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-bold text-white">
-                    {selectedPlayer ? 'Editar Jugador' : 'Crear Jugador'}
+        <div className="w-full max-w-md bg-slate-900/95 backdrop-blur-2xl p-6 rounded-3xl border border-white/20 shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-black text-white flex items-center gap-2 uppercase tracking-tighter">
+                    {selectedPlayer ? 'Editar Jugador' : 'Nuevo Jugador'}
                 </h3>
-                <button onClick={onClose} className="text-gray-400 hover:text-white">
-                    <X size={20} />
+                <button onClick={onClose} className="bg-white/5 hover:bg-white/10 p-2 rounded-full transition-colors">
+                    <X size={20} className="text-white" />
                 </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Image Upload */}
-                <div className="flex justify-center mb-4">
-                    <div className="relative group cursor-pointer w-24 h-24">
+            <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Image Upload - More Professional */}
+                <div className="flex flex-col items-center gap-2">
+                    <div className="relative group w-28 h-28">
                         <input
                             type="file"
                             onChange={handleImageChange}
                             accept="image/*"
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
                         />
-                        <div className={`w-full h-full rounded-full border-2 border-dashed border-white/30 flex items-center justify-center overflow-hidden bg-slate-900 ${color}`}>
+                        <div className={`
+                            w-full h-full rounded-3xl border-2 border-dashed border-white/20 flex items-center justify-center overflow-hidden transition-all
+                            ${previewUrl ? 'border-solid border-blue-500' : 'bg-white/5 group-hover:bg-white/10'}
+                        `}>
                             {previewUrl ? (
                                 <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
                             ) : (
-                                <div className="text-center">
-                                    <Upload size={24} className="mx-auto text-gray-400 mb-1" />
-                                    <span className="text-[10px] text-gray-400">Subir Foto</span>
+                                <div className="text-center text-gray-500">
+                                    <Upload size={32} className="mx-auto mb-1 opacity-50" />
+                                    <span className="text-[10px] uppercase font-bold">Subir Foto</span>
                                 </div>
                             )}
+                        </div>
+                        <div className="absolute -bottom-2 -right-2 bg-blue-600 p-1.5 rounded-xl shadow-lg border border-white/20 z-10">
+                            <Upload size={14} className="text-white" />
                         </div>
                     </div>
                 </div>
 
-                <div className="flex gap-2">
-                    <div className="w-20">
-                        <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Dorsal</label>
-                        <input
-                            type="number"
-                            value={number}
-                            onChange={(e) => setNumber(e.target.value)}
-                            className="w-full bg-slate-900 border border-white/10 rounded p-2 text-white focus:outline-none focus:border-blue-500 text-center"
-                            placeholder="#"
-                        />
-                    </div>
-                    <div className="flex-1">
-                        <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Posición</label>
-                        <select
-                            value={positionType}
-                            onChange={(e) => handlePositionChange(e.target.value)}
-                            className="w-full bg-slate-900 border border-white/10 rounded p-2 text-white focus:outline-none focus:border-blue-500"
-                        >
-                            {positionOptions.map(opt => (
-                                <option key={opt.id} value={opt.id}>{opt.label}</option>
-                            ))}
-                        </select>
-                    </div>
-                </div>
-
-                <div>
-                    <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Nombre</label>
-                    <input
-                        type="text"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        className="w-full bg-slate-900 border border-white/10 rounded p-2 text-white focus:outline-none focus:border-blue-500 transition-colors"
-                        placeholder="Nombre / Apodo"
-                    />
-                </div>
-
-                <div>
-                    <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Color de Camiseta</label>
-                    <div className="flex flex-wrap gap-2">
-                        {colors.map(c => (
-                            <button
-                                key={c}
-                                type="button"
-                                onClick={() => setColor(c)}
-                                className={`w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 flex items-center justify-center
-                                    ${color === c ? 'border-white scale-110' : 'border-transparent opacity-70 hover:opacity-100'}
-                                    ${c}
-                                `}
+                <div className="space-y-4">
+                    {/* Name Input */}
+                    <div className="relative">
+                        <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest ml-1 mb-1 block">Nombre Completo</label>
+                        <div className="relative">
+                            <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                            <input
+                                type="text"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 pl-10 pr-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-medium"
+                                placeholder="Ej: Lionel Messi"
+                                required
                             />
-                        ))}
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        {/* Number Input */}
+                        <div className="relative">
+                            <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest ml-1 mb-1 block">Dorsal</label>
+                            <div className="relative">
+                                <Hash size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                <input
+                                    type="number"
+                                    value={number}
+                                    onChange={(e) => setNumber(e.target.value)}
+                                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 pl-10 pr-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-medium"
+                                    placeholder="10"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Position Input */}
+                        <div className="relative">
+                            <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest ml-1 mb-1 block">Posición</label>
+                            <div className="relative">
+                                <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                <select
+                                    value={positionType}
+                                    onChange={(e) => handlePositionChange(e.target.value)}
+                                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 pl-10 pr-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-medium appearance-none cursor-pointer"
+                                >
+                                    {positionOptions.map(opt => (
+                                        <option key={opt.id} value={opt.id} className="bg-slate-900">{opt.label}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div className="flex gap-2 pt-2 border-t border-white/10 mt-4">
+                <div className="flex gap-3 pt-4">
                     {selectedPlayer && (
                         <button
                             type="button"
@@ -187,19 +183,25 @@ const PlayerForm = ({ selectedPlayer, onSave, onDelete, onCancel, onClose }) => 
                                     onDelete(selectedPlayer.id);
                                 }
                             }}
-                            className="bg-red-500/20 hover:bg-red-500/40 text-red-200 p-2 rounded flex-1 flex justify-center items-center gap-2 transition-colors"
+                            className="bg-red-500/10 hover:bg-red-500/20 text-red-500 p-4 rounded-2xl flex-shrink-0 transition-colors border border-red-500/20"
                         >
-                            <Trash2 size={16} /> Eliminar
+                            <Trash2 size={20} />
                         </button>
                     )}
                     <button
                         type="submit"
                         disabled={uploading}
-                        className="bg-blue-600 hover:bg-blue-500 text-white p-2 rounded flex-1 flex justify-center items-center gap-2 transition-colors font-semibold shadow-lg shadow-blue-900/20 disabled:opacity-50"
+                        className="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-2xl flex justify-center items-center gap-2 transition-all font-bold shadow-xl shadow-blue-600/20 disabled:opacity-50 active:scale-95"
                     >
-                        {uploading ? 'Subiendo...' : (
+                        {uploading ? (
+                            <div className="flex items-center gap-2">
+                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                <span>Subiendo...</span>
+                            </div>
+                        ) : (
                             <>
-                                <Save size={16} /> Guardar
+                                <Save size={20} />
+                                <span>GUARDAR JUGADOR</span>
                             </>
                         )}
                     </button>
