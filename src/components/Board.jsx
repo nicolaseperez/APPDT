@@ -147,204 +147,207 @@ const Board = () => {
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
         >
-            <div className="min-h-screen flex flex-col items-center">
+            <div className="h-screen w-full flex flex-col md:flex-row overflow-hidden bg-slate-950">
 
-                {/* Desktop Top Ad */}
-                {isDesktop && (
-                    <div className="w-full max-w-5xl h-24 bg-gray-900 mb-2 flex items-center justify-center overflow-hidden rounded-b-lg">
-                        <img src="/Publi1.jpg" alt="Publicidad" className="w-full h-full object-cover" />
-                    </div>
-                )}
+                {/* Main Content Area: Ads + Field 
+                    Centered Column
+                */}
+                <div className="flex-1 flex flex-col items-center justify-center p-4 relative overflow-y-auto">
 
-                {/* Header for Auth - Absolute positioned on Mobile to sit "above right" */}
-                {/* On Desktop, we keep it floating or integrate it? Keeping it consistent with previous request: floating top right */}
-                <div className={`fixed top-4 right-4 z-50 ${isDesktop ? 'top-8 right-8' : ''}`}>
-                    <div className="backdrop-blur-md bg-black/30 rounded-lg">
-                        <AuthButton />
+                    {/* Desktop Top Ad */}
+                    {isDesktop && (
+                        <div className="w-full max-w-4xl h-24 bg-gray-900 border border-white/10 rounded-lg mb-2 overflow-hidden flex-shrink-0">
+                            <img src="/Publi1.jpg" alt="Publicidad" className="w-full h-full object-cover" />
+                        </div>
+                    )}
+
+                    {/* Field Container */}
+                    {/* 
+                        Mobile: aspect-[3/5] to force vertical shape even if screen is weird.
+                        Desktop: aspect-[4/3] standard.
+                    */}
+                    <div
+                        id="field-container"
+                        className={`
+                            relative transition-all duration-500 shadow-2xl
+                            ${isDesktop ? 'w-full max-w-4xl aspect-[4/3]' : 'w-full max-w-sm aspect-[3/5]'} 
+                        `}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <Field orientation={orientation}>
+                            {players.map((p) => {
+                                const visualPos = getVisualPosition(p.x, p.y);
+                                return (
+                                    <div key={p.id} onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (!isReadOnly) {
+                                            setSelectedPlayerId(p.id);
+                                            setShowAddForm(false);
+                                        }
+                                    }}>
+                                        <Player
+                                            id={p.id}
+                                            number={p.number}
+                                            name={p.name}
+                                            color={p.color}
+                                            position={visualPos}
+                                            isOverlay={false}
+                                            imageUrl={p.imageUrl}
+                                        />
+                                        {/* Selection Indicator */}
+                                        {selectedPlayerId === p.id && (
+                                            <div
+                                                className="absolute w-12 h-12 rounded-full border-2 border-yellow-400 animate-pulse pointer-events-none"
+                                                style={{
+                                                    left: `${visualPos.x}%`,
+                                                    top: `${visualPos.y}%`,
+                                                    transform: 'translate(-50%, -50%)',
+                                                    zIndex: 40
+                                                }}
+                                            />
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </Field>
                     </div>
+
+                    {/* Desktop Bottom Ad */}
+                    {isDesktop && (
+                        <div className="w-full max-w-4xl h-24 bg-gray-900 border border-white/10 rounded-lg mt-2 overflow-hidden flex-shrink-0">
+                            <img src="/Publi2.jpg" alt="Publicidad" className="w-full h-full object-cover" />
+                        </div>
+                    )}
+
+                    {/* Mobile Bottom Spacer for List */}
+                    {!isDesktop && <div className="h-32 w-full flex-shrink-0" />}
                 </div>
 
-                <div className="flex flex-col md:flex-row flex-1 w-full max-w-[1920px] p-4 gap-4 items-center md:items-start overflow-hidden">
+                {/* Sidebar / Tools / Mobile List Drawer 
+                    Sits on the RIGHT on desktop separate from the Ads column.
+                */}
+                <div className={`
+                    bg-slate-900/90 backdrop-blur-xl border-l border-white/10 text-white shadow-2xl z-50
+                    ${isDesktop
+                        ? 'w-80 h-full p-4 flex flex-col'
+                        : 'fixed bottom-0 left-0 right-0 h-auto max-h-[30vh] rounded-t-2xl p-3 flex flex-col border-t border-white/20'
+                    }
+                `}>
+                    {error && (
+                        <div className="bg-red-500/20 text-red-200 p-2 rounded text-xs mb-2 border border-red-500/30">
+                            {error}
+                        </div>
+                    )}
 
-                    {/* Field Area */}
-                    <div className="flex-1 flex justify-center items-center relative w-full h-full" onClick={() => { setSelectedPlayerId(null); setShowAddForm(false); }}>
-                        <div
-                            id="field-container"
-                            className={`
-                                relative transition-all duration-500 origin-top
-                                ${isDesktop ? 'w-full max-w-5xl' : 'h-[65vh] aspect-[3/4]'}
-                            `}
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <Field orientation={orientation}>
-                                {players.map((p) => {
-                                    const visualPos = getVisualPosition(p.x, p.y);
-                                    return (
-                                        <div key={p.id} onClick={(e) => {
-                                            e.stopPropagation();
-                                            if (!isReadOnly) {
-                                                setSelectedPlayerId(p.id);
-                                                setShowAddForm(false);
-                                            }
-                                        }}>
-                                            <Player
-                                                id={p.id}
-                                                number={p.number}
-                                                name={p.name}
-                                                color={p.color}
-                                                position={visualPos}
-                                                isOverlay={false}
-                                                imageUrl={p.imageUrl}
-                                            />
-                                            {/* Selection Indicator */}
-                                            {selectedPlayerId === p.id && (
-                                                <div
-                                                    className="absolute w-12 h-12 rounded-full border-2 border-yellow-400 animate-pulse pointer-events-none"
-                                                    style={{
-                                                        left: `${visualPos.x}%`,
-                                                        top: `${visualPos.y}%`,
-                                                        transform: 'translate(-50%, -50%)',
-                                                        zIndex: 40
-                                                    }}
-                                                />
-                                            )}
-                                        </div>
-                                    );
-                                })}
-                            </Field>
+                    {isReadOnly && (
+                        <div className="bg-blue-500/20 text-blue-200 p-1 rounded text-xs mb-2 border border-blue-500/30 flex items-center justify-center gap-2">
+                            <Lock size={12} />
+                            Solo Lectura
+                        </div>
+                    )}
+
+                    {/* Toolbar Header */}
+                    <div className={`flex justify-between items-center ${isDesktop ? 'mb-4 border-b border-white/10 pb-4' : 'mb-2'}`}>
+                        {isDesktop && (
+                            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                                Equipo <span className="text-xs bg-white/10 px-2 py-0.5 rounded text-gray-400">{players.length}</span>
+                            </h2>
+                        )}
+                        {/* Mobile Header Simplified */}
+                        {!isDesktop && <div className="text-xs font-bold text-gray-400">PLANTILLA ({players.length})</div>}
+
+                        <div className="flex gap-2 items-center">
+                            {/* Move AuthButton here for Desktop, show icon for mobile? */}
+                            {isDesktop && <AuthButton />}
+
+                            {user && !isReadOnly && (
+                                <>
+                                    <button
+                                        onClick={handleShare}
+                                        className="bg-indigo-600 hover:bg-indigo-500 text-white p-1.5 md:p-2 rounded-lg transition-colors shadow-lg"
+                                        title="Compartir"
+                                    >
+                                        <Share2 size={isDesktop ? 20 : 16} />
+                                    </button>
+                                    <button
+                                        onClick={handleSave}
+                                        disabled={isSaving}
+                                        className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white p-1.5 md:p-2 rounded-lg transition-colors shadow-lg"
+                                        title="Guardar"
+                                    >
+                                        <Save size={isDesktop ? 20 : 16} className={isSaving ? 'animate-spin' : ''} />
+                                    </button>
+                                </>
+                            )}
+                            {!isReadOnly && (
+                                <button
+                                    onClick={() => { setShowAddForm(true); setSelectedPlayerId(null); }}
+                                    className="bg-green-600 hover:bg-green-500 text-white p-1.5 md:p-2 rounded-lg transition-colors shadow-lg shadow-green-900/20 flex items-center gap-1"
+                                >
+                                    <Plus size={isDesktop ? 20 : 16} /> <span className="text-xs font-bold hidden md:inline">Agregar</span>
+                                </button>
+                            )}
+                            {!isDesktop && <div className="scale-75 origin-right"><AuthButton /></div>}
                         </div>
                     </div>
 
-                    {/* Sidebar / Tools / Mobile List */}
-                    {/* Mobile: Fixed Bottom drawer style */}
-                    {/* Desktop: Standard Sidebar */}
-                    <div className={`
-                        bg-slate-900/90 backdrop-blur-xl border border-white/10 text-white shadow-2xl z-40
-                        ${isDesktop
-                            ? 'w-80 rounded-xl p-4 flex flex-col h-[600px] overflow-hidden'
-                            : 'fixed bottom-0 left-0 right-0 h-[25vh] rounded-t-2xl p-3 flex flex-col' // Mobile Drawer
-                        }
-                    `}>
-                        {error && (
-                            <div className="bg-red-500/20 text-red-200 p-2 rounded text-xs mb-2 border border-red-500/30">
-                                {error}
-                            </div>
-                        )}
-
-                        {isReadOnly && (
-                            <div className="bg-blue-500/20 text-blue-200 p-1 rounded text-xs mb-2 border border-blue-500/30 flex items-center justify-center gap-2">
-                                <Lock size={12} />
-                                Solo Lectura
-                            </div>
-                        )}
-
-                        {/* Toolbar Header */}
-                        <div className={`flex justify-between items-center ${isDesktop ? 'mb-4 border-b border-white/10 pb-4' : 'mb-2'}`}>
-                            <h2 className="text-sm md:text-xl font-bold text-white flex items-center gap-2">
-                                Equipo <span className="text-xs bg-white/10 px-2 py-0.5 rounded text-gray-400">{players.length}</span>
-                            </h2>
-                            <div className="flex gap-2">
-                                {user && !isReadOnly && (
-                                    <>
-                                        <button
-                                            onClick={handleShare}
-                                            className="bg-indigo-600 hover:bg-indigo-500 text-white p-1.5 md:p-2 rounded-lg transition-colors shadow-lg"
-                                        >
-                                            <Share2 size={isDesktop ? 20 : 16} />
-                                        </button>
-                                        <button
-                                            onClick={handleSave}
-                                            disabled={isSaving}
-                                            className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white p-1.5 md:p-2 rounded-lg transition-colors shadow-lg"
-                                        >
-                                            <Save size={isDesktop ? 20 : 16} className={isSaving ? 'animate-spin' : ''} />
-                                        </button>
-                                    </>
-                                )}
-                                {!isReadOnly && (
-                                    <button
-                                        onClick={() => { setShowAddForm(true); setSelectedPlayerId(null); }}
-                                        className="bg-green-600 hover:bg-green-500 text-white p-1.5 md:p-2 rounded-lg transition-colors shadow-lg shadow-green-900/20 flex items-center gap-1"
-                                    >
-                                        <Plus size={isDesktop ? 20 : 16} /> <span className="text-xs font-bold hidden md:inline">Agregar</span>
-                                    </button>
-                                )}
-                            </div>
+                    {/* Content Area */}
+                    {(!isReadOnly && (selectedPlayerId || showAddForm)) ? (
+                        <div className="flex-1 overflow-y-auto pr-1">
+                            <PlayerForm
+                                selectedPlayer={selectedPlayer}
+                                onSave={selectedPlayerId ? handleUpdatePlayer : handleAddPlayer}
+                                onDelete={handleDeletePlayer}
+                                onCancel={() => { setSelectedPlayerId(null); setShowAddForm(false); }}
+                                onClose={() => { setSelectedPlayerId(null); setShowAddForm(false); }}
+                            />
                         </div>
+                    ) : (
+                        // List View
+                        <div className={`flex-1 ${isDesktop ? 'overflow-y-auto space-y-4 pr-1' : 'overflow-x-auto flex gap-4 items-center pb-2 touch-pan-x'}`}>
+                            {['ARQ', 'DEF', 'MED', 'DEL'].map(group => {
+                                const groupPlayers = groupedPlayers[group];
+                                if (groupPlayers.length === 0) return null;
 
-                        {/* Content Area */}
+                                return (
+                                    <div key={group} className={`${isDesktop ? 'animate-fade-in' : 'flex flex-row gap-2 items-center flex-shrink-0 border-r border-white/10 pr-4 last:border-0'}`}>
+                                        {isDesktop && <h4 className="text-xs font-bold text-gray-500 uppercase mb-2 border-b border-white/5 pb-1">{groupLabels[group]}</h4>}
 
-                        {/* Edit/Add Form takes priority (Overlay on mobile, inline on desktop) */}
-                        {(!isReadOnly && (selectedPlayerId || showAddForm)) ? (
-                            <div className="flex-1 overflow-y-auto pr-1">
-                                <PlayerForm
-                                    selectedPlayer={selectedPlayer}
-                                    onSave={selectedPlayerId ? handleUpdatePlayer : handleAddPlayer}
-                                    onDelete={handleDeletePlayer}
-                                    onCancel={() => { setSelectedPlayerId(null); setShowAddForm(false); }}
-                                    onClose={() => { setSelectedPlayerId(null); setShowAddForm(false); }}
-                                />
-                            </div>
-                        ) : (
-                            // List View
-                            <div className={`flex-1 ${isDesktop ? 'overflow-y-auto space-y-4 pr-1' : 'overflow-x-auto flex gap-4 items-center pb-2'}`}>
-                                {['ARQ', 'DEF', 'MED', 'DEL'].map(group => {
-                                    const groupPlayers = groupedPlayers[group];
-                                    if (groupPlayers.length === 0) return null;
-
-                                    // Container style based on desktop vs mobile
-                                    return (
-                                        <div key={group} className={`${isDesktop ? 'animate-fade-in' : 'flex flex-row gap-2 items-center flex-shrink-0 border-r border-white/10 pr-4 last:border-0'}`}>
-                                            {/* Group Label */}
-                                            {isDesktop && <h4 className="text-xs font-bold text-gray-500 uppercase mb-2 border-b border-white/5 pb-1">{groupLabels[group]}</h4>}
-
-                                            {/* Players Grid/Row */}
-                                            <div className={`${isDesktop ? 'grid grid-cols-1 gap-2' : 'flex gap-2'}`}>
-                                                {groupPlayers.map(p => (
-                                                    <div
-                                                        key={p.id}
-                                                        onClick={() => !isReadOnly && setSelectedPlayerId(p.id)}
-                                                        className={`
+                                        <div className={`${isDesktop ? 'grid grid-cols-1 gap-2' : 'flex gap-2'}`}>
+                                            {groupPlayers.map(p => (
+                                                <div
+                                                    key={p.id}
+                                                    onClick={() => !isReadOnly && setSelectedPlayerId(p.id)}
+                                                    className={`
                                                             flex items-center gap-2 rounded-lg border transition-all hover:bg-white/5
                                                             ${selectedPlayerId === p.id ? 'bg-white/10 border-green-500/50' : 'bg-slate-800/50 border-white/5'}
                                                             ${isReadOnly ? 'cursor-default' : 'cursor-pointer'}
-                                                            ${isDesktop ? 'p-2' : 'flex-col p-2 w-20 justify-center text-center'}
+                                                            ${isDesktop ? 'p-2' : 'flex-col p-2 w-16 justify-center text-center'}
                                                         `}
-                                                    >
-                                                        <div className={`
+                                                >
+                                                    <div className={`
                                                             rounded-full flex items-center justify-center text-xs font-bold text-white border border-white/20 overflow-hidden 
                                                             ${p.color} ${p.imageUrl ? 'bg-white' : ''}
                                                             ${isDesktop ? 'w-8 h-8' : 'w-10 h-10'}
                                                         `}>
-                                                            {p.imageUrl ? (
-                                                                <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover" />
-                                                            ) : p.number}
-                                                        </div>
-                                                        <div className="flex-1 min-w-0" >
-                                                            <p className="font-semibold text-sm text-white truncate">{p.name || '...'}</p>
-                                                            {/* Mobile Group Label (since we removed header) */}
-                                                            {!isDesktop && <p className="text-[9px] text-gray-400">{group}</p>}
-                                                        </div>
-                                                        {isDesktop && !isReadOnly && <Pencil size={14} className="text-gray-500 group-hover:text-white" />}
+                                                        {p.imageUrl ? (
+                                                            <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover" />
+                                                        ) : p.number}
                                                     </div>
-                                                ))}
-                                            </div>
+                                                    <div className="flex-1 min-w-0" >
+                                                        <p className="font-semibold text-sm text-white truncate max-w-full">{p.name || '...'}</p>
+                                                        {!isDesktop && <p className="text-[9px] text-gray-400">{group}</p>}
+                                                    </div>
+                                                    {isDesktop && !isReadOnly && <Pencil size={14} className="text-gray-500 group-hover:text-white" />}
+                                                </div>
+                                            ))}
                                         </div>
-                                    );
-                                })}
-                            </div>
-                        )}
-
-                    </div>
-
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
                 </div>
-
-                {/* Desktop Bottom Ad */}
-                {isDesktop && (
-                    <div className="w-full max-w-5xl h-24 bg-gray-900 mt-auto mb-4 flex items-center justify-center overflow-hidden rounded-lg">
-                        <img src="/Publi2.jpg" alt="Publicidad" className="w-full h-full object-cover" />
-                    </div>
-                )}
             </div>
 
             <DragOverlay>
