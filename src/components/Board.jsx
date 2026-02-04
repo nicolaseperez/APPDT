@@ -3,6 +3,8 @@ import { DndContext, useSensor, useSensors, PointerSensor, DragOverlay } from '@
 import Field from './Field';
 import Player from './Player';
 import { useMediaQuery } from '../hooks/useMediaQuery';
+import PlayerForm from './PlayerForm';
+import { Pencil, Plus } from 'lucide-react';
 
 const Board = () => {
     // Logic coordinates are always Vertical (0-100 X, 0-100 Y)
@@ -19,6 +21,9 @@ const Board = () => {
     ]);
 
     const [activeId, setActiveId] = useState(null);
+    const [selectedPlayerId, setSelectedPlayerId] = useState(null);
+    const [showAddForm, setShowAddForm] = useState(false);
+
     const isDesktop = useMediaQuery('(min-width: 768px)');
     // If desktop, we act as 'horizontal' (TV View)
     const orientation = isDesktop ? 'horizontal' : 'vertical';
@@ -54,27 +59,12 @@ const Board = () => {
 
                 if (orientation === 'horizontal') {
                     // Mapping from Horizontal Visual to Vertical Logical
-                    // Visual X (Left->Right) maps to Logical Y (Top->Bottom) ? No.
-                    // TV View:
-                    // Left Goal (Logical Bottom, Y=100) is at Visual Left (X=0).  -> Wait.
-                    // Let's decide standard TV View:
-                    // Left Side of Screen = Home Goal? 
-                    // Let's assume standard: Left Side = Top Logical Goal (Y=0). Right Side = Bottom Logical Goal (Y=100).
-                    // Top Side of Screen = Right Logical Sideline (X=100).
-                    // Bottom Side of Screen = Left Logical Sideline (X=0).
-
-                    // Let's check Field.jsx markings.
-                    // Horizontal: 
-                    // goal left (left: 4) -> This implies Logical Top Goal (Y=0) is on Left?
-                    // goal right (right: 4) -> This implies Logical Bottom Goal (Y=100) is on Right?
-                    // If so:
-                    // Visual X (0->100) maps to Logical Y (0->100).
-                    // Visual Y (0->100) maps to Logical X (100 -> 0) (Top visual is Right logical).
+                    // Visual X (Left->Right) maps to Logical Y (0->100).
+                    // Visual Y (Top->Bottom) maps to Logical X (100 -> 0) (Top visual is Right logical).
 
                     // So:
                     // Logical Y change = Visual X change
                     // Logical X change = - Visual Y change
-
                     newY = p.y + deltaPercentX;
                     newX = p.x - deltaPercentY; // Inverted axis
 
@@ -96,6 +86,27 @@ const Board = () => {
         setActiveId(null);
     };
 
+    const handleAddPlayer = (playerData) => {
+        const newPlayer = {
+            id: `p${Date.now()}`,
+            ...playerData,
+            x: 50,
+            y: 50 // Default center
+        };
+        setPlayers([...players, newPlayer]);
+        setShowAddForm(false);
+    };
+
+    const handleUpdatePlayer = (updatedData) => {
+        setPlayers(players.map(p => p.id === updatedData.id ? { ...p, ...updatedData } : p));
+        setSelectedPlayerId(null);
+    };
+
+    const handleDeletePlayer = (id) => {
+        setPlayers(players.filter(p => p.id !== id));
+        setSelectedPlayerId(null);
+    };
+
     const getVisualPosition = (logicalX, logicalY) => {
         if (orientation === 'horizontal') {
             // Logic: Left Goal (Y=0) is Left Screen.
@@ -110,6 +121,8 @@ const Board = () => {
         return { x: logicalX, y: logicalY };
     };
 
+    const selectedPlayer = players.find(p => p.id === selectedPlayerId);
+
     return (
         <DndContext
             sensors={sensors}
@@ -118,20 +131,34 @@ const Board = () => {
         >
             <div className="flex flex-col md:flex-row h-screen p-4 gap-4">
                 {/* Field Area */}
-                <div className="flex-1 flex justify-center items-center">
-                    <div id="field-container" className={`w-full relative transition-all duration-500 ${isDesktop ? 'max-w-5xl' : 'max-w-md'}`}>
+                <div className="flex-1 flex justify-center items-center relative" onClick={() => { setSelectedPlayerId(null); setShowAddForm(false); }}>
+                    <div id="field-container" className={`w-full relative transition-all duration-500 ${isDesktop ? 'max-w-5xl' : 'max-w-md'}`} onClick={(e) => e.stopPropagation()}>
                         <Field orientation={orientation}>
                             {players.map((p) => {
                                 const visualPos = getVisualPosition(p.x, p.y);
                                 return (
-                                    <Player
-                                        key={p.id}
-                                        id={p.id}
-                                        number={p.number}
-                                        name={p.name}
-                                        color={p.color}
-                                        position={visualPos}
-                                    />
+                                    <div key={p.id} onClick={(e) => { e.stopPropagation(); setSelectedPlayerId(p.id); setShowAddForm(false); }}>
+                                        <Player
+                                            id={p.id}
+                                            number={p.number}
+                                            name={p.name}
+                                            color={p.color}
+                                            position={visualPos}
+                                            isOverlay={false}
+                                        />
+                                        {/* Selection Indicator */}
+                                        {selectedPlayerId === p.id && (
+                                            <div
+                                                className="absolute w-12 h-12 rounded-full border-2 border-yellow-400 animate-pulse pointer-events-none"
+                                                style={{
+                                                    left: `${visualPos.x}%`,
+                                                    top: `${visualPos.y}%`,
+                                                    transform: 'translate(-50%, -50%)',
+                                                    zIndex: 40
+                                                }}
+                                            />
+                                        )}
+                                    </div>
                                 );
                             })}
                         </Field>
@@ -139,19 +166,53 @@ const Board = () => {
                 </div>
 
                 {/* Sidebar / Tools */}
-                <div className="w-full md:w-80 bg-slate-800/80 backdrop-blur-md rounded-xl p-6 shadow-xl border border-white/10 flex flex-col">
-                    <h2 className="text-2xl font-bold mb-6 text-white border-b border-white/10 pb-2">Squad</h2>
+                <div className="w-full md:w-80 bg-slate-900/90 backdrop-blur-xl rounded-xl p-4 shadow-2xl border border-white/10 flex flex-col h-1/3 md:h-auto overflow-hidden">
+                    <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-4">
+                        <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                            Squad <span className="text-xs bg-white/10 px-2 py-0.5 rounded text-gray-400">{players.length}</span>
+                        </h2>
+                        <button
+                            onClick={() => { setShowAddForm(true); setSelectedPlayerId(null); }}
+                            className="bg-green-600 hover:bg-green-500 text-white p-2 rounded-lg transition-colors shadow-lg shadow-green-900/20"
+                        >
+                            <Plus size={20} />
+                        </button>
+                    </div>
 
-                    <div className="flex-1 overflow-y-auto">
-                        {/* List of players could go here if we had a bench */}
-                        <div className="bg-white/5 p-4 rounded-lg border border-white/5 mb-4">
-                            <p className="text-sm text-gray-300">
-                                <span className="font-semibold text-white">Hint:</span> Drag players to position them.
-                            </p>
-                            <p className="text-xs text-gray-400 mt-2">
-                                Current View: <span className="text-green-400 font-mono">{orientation.toUpperCase()}</span>
-                            </p>
-                        </div>
+                    <div className="flex-1 overflow-y-auto pr-1 space-y-3 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
+
+                        {/* Edit/Add Form takes priority */}
+                        {(selectedPlayerId || showAddForm) ? (
+                            <PlayerForm
+                                selectedPlayer={selectedPlayer}
+                                onSave={selectedPlayerId ? handleUpdatePlayer : handleAddPlayer}
+                                onDelete={handleDeletePlayer}
+                                onCancel={() => { setSelectedPlayerId(null); setShowAddForm(false); }}
+                                onClose={() => { setSelectedPlayerId(null); setShowAddForm(false); }}
+                            />
+                        ) : (
+                            <div className="grid grid-cols-1 gap-2">
+                                <p className="text-xs text-gray-500 mb-2 italic">Click a player on the field to edit.</p>
+                                {players.map(p => (
+                                    <div
+                                        key={p.id}
+                                        onClick={() => setSelectedPlayerId(p.id)}
+                                        className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all hover:bg-white/5
+                                            ${selectedPlayerId === p.id ? 'bg-white/10 border-green-500/50' : 'bg-slate-800/50 border-white/5'}
+                                        `}
+                                    >
+                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white border border-white/20 ${p.color}`}>
+                                            {p.number}
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="font-semibold text-sm text-white">{p.name || 'Unnamed'}</p>
+                                            <p className="text-xs text-gray-400 font-mono">ID: {p.id}</p>
+                                        </div>
+                                        <Pencil size={14} className="text-gray-500 group-hover:text-white" />
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
