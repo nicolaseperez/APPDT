@@ -4,13 +4,15 @@ import Field from './Field';
 import Player from './Player';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import PlayerForm from './PlayerForm';
-import { Pencil, Plus } from 'lucide-react';
+import AuthButton from './AuthButton';
+import { useTactics } from '../hooks/useTactics';
+import { Pencil, Plus, Save } from 'lucide-react';
 
 const Board = () => {
     // Logic coordinates are always Vertical (0-100 X, 0-100 Y)
     // X: 0 (Left Sideline) -> 100 (Right Sideline)
     // Y: 0 (Top Goal) -> 100 (Bottom Goal)
-    const [players, setPlayers] = useState([
+    const initialPlayers = [
         { id: 'p1', number: 1, name: 'GK', x: 50, y: 90, color: 'bg-yellow-500' },
         { id: 'p2', number: 2, name: 'DEF', x: 20, y: 70, color: 'bg-blue-600' },
         { id: 'p3', number: 3, name: 'DEF', x: 50, y: 70, color: 'bg-blue-600' },
@@ -18,11 +20,14 @@ const Board = () => {
         { id: 'p5', number: 5, name: 'MID', x: 35, y: 50, color: 'bg-blue-600' },
         { id: 'p6', number: 6, name: 'MID', x: 65, y: 50, color: 'bg-blue-600' },
         { id: 'p7', number: 7, name: 'FWD', x: 50, y: 20, color: 'bg-red-600' },
-    ]);
+    ];
+
+    const { players, setPlayers, saveTactics, user } = useTactics(initialPlayers);
 
     const [activeId, setActiveId] = useState(null);
     const [selectedPlayerId, setSelectedPlayerId] = useState(null);
     const [showAddForm, setShowAddForm] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
 
     const isDesktop = useMediaQuery('(min-width: 768px)');
     // If desktop, we act as 'horizontal' (TV View)
@@ -107,6 +112,12 @@ const Board = () => {
         setSelectedPlayerId(null);
     };
 
+    const handleSave = async () => {
+        setIsSaving(true);
+        await saveTactics(players);
+        setIsSaving(false);
+    };
+
     const getVisualPosition = (logicalX, logicalY) => {
         if (orientation === 'horizontal') {
             // Logic: Left Goal (Y=0) is Left Screen.
@@ -167,16 +178,33 @@ const Board = () => {
 
                 {/* Sidebar / Tools */}
                 <div className="w-full md:w-80 bg-slate-900/90 backdrop-blur-xl rounded-xl p-4 shadow-2xl border border-white/10 flex flex-col h-1/3 md:h-auto overflow-hidden">
+                    <div className="mb-4">
+                        <AuthButton />
+                    </div>
+
                     <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-4">
                         <h2 className="text-xl font-bold text-white flex items-center gap-2">
                             Squad <span className="text-xs bg-white/10 px-2 py-0.5 rounded text-gray-400">{players.length}</span>
                         </h2>
-                        <button
-                            onClick={() => { setShowAddForm(true); setSelectedPlayerId(null); }}
-                            className="bg-green-600 hover:bg-green-500 text-white p-2 rounded-lg transition-colors shadow-lg shadow-green-900/20"
-                        >
-                            <Plus size={20} />
-                        </button>
+                        <div className="flex gap-2">
+                            {user && (
+                                <button
+                                    onClick={handleSave}
+                                    disabled={isSaving}
+                                    className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white p-2 rounded-lg transition-colors shadow-lg"
+                                    title="Save to Cloud"
+                                >
+                                    <Save size={20} className={isSaving ? 'animate-spin' : ''} />
+                                </button>
+                            )}
+                            <button
+                                onClick={() => { setShowAddForm(true); setSelectedPlayerId(null); }}
+                                className="bg-green-600 hover:bg-green-500 text-white p-2 rounded-lg transition-colors shadow-lg shadow-green-900/20"
+                                title="Add Player"
+                            >
+                                <Plus size={20} />
+                            </button>
+                        </div>
                     </div>
 
                     <div className="flex-1 overflow-y-auto pr-1 space-y-3 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
