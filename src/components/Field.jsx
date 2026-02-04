@@ -23,14 +23,8 @@ const Field = ({ children, orientation }) => {
                 style={{
                     backgroundImage: "url('/cancha.jpg')",
                     // If vertical, rotate 90deg. 
-                    // Scale needed? Ideally bg-cover handles it if container matches, but rotation swaps dimensions.
-                    // A simple rotation might leave gaps if not sized.
-                    // Using a pseudo-element strategy or transforming a larger container is safer, 
-                    // but let's try simple rotation first. If it's a 16:9 image in a 3:4 container rotated, it might need 'bg-contain' or specific scaling.
-                    // Let's assume standard bg-cover on the DIV itself works best if we don't rotate the div but use a rotated inner div?
-                    // Actually, if we rotate the div, we rotate the children (players). WE MUST NOT ROTATE PLAYERS.
-                    // So we rotate this background layer only.
-                    transform: isVertical ? 'scale(1.5) rotate(90deg)' : 'none',
+                    // Reduced scale from 1.5 to 1.1 as requested.
+                    transform: isVertical ? 'scale(1.1) rotate(90deg)' : 'none',
                 }}
             />
 
