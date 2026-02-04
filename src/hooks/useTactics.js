@@ -10,27 +10,28 @@ export function useTactics(initialPlayers) {
     const [loadingConfig, setLoadingConfig] = useState(false);
 
     useEffect(() => {
-        if (!user) {
-            // If logged out, maybe reset to defaults or keep local changes?
-            // keeping local changes is better for seamless exp.
-            return;
-        }
+        if (!user) return;
 
         setLoadingConfig(true);
         const docRef = doc(db, 'users', user.uid, 'tactics', 'current');
 
-        // Realtime listener
         const unsubscribe = onSnapshot(docRef, (docSnap) => {
             setLoadingConfig(false);
             if (docSnap.exists()) {
                 const data = docSnap.data();
                 if (data.players) {
-                    setPlayers(data.players);
+                    // Sanar los datos al traerlos (asegurar campos por defecto)
+                    const sanitized = data.players.map(p => ({
+                        ...p,
+                        locked: p.locked || false,
+                        imageUrl: p.imageUrl || null,
+                        number: p.number || 0,
+                        name: p.name || 'JUGADOR',
+                        positionType: p.positionType || 'MED',
+                        color: p.color || 'bg-blue-600'
+                    }));
+                    setPlayers(sanitized);
                 }
-            } else {
-                // Create default if not exists
-                // Don't overwrite local if we just logged in?
-                // Let's safe init.
             }
         }, (err) => {
             console.error("Firestore Error:", err);
@@ -42,19 +43,31 @@ export function useTactics(initialPlayers) {
 
     const saveTactics = async (currentPlayers) => {
         if (!user) {
-            alert("Please sign in to save.");
+            alert("Inicia sesión para guardar tus cambios.");
             return;
         }
 
         try {
+            // Limpiar datos antes de enviar a Firestore (reemplazar undefined por null)
+            const cleanPlayers = currentPlayers.map(p => ({
+                id: p.id || `p${Date.now()}`,
+                name: p.name || '',
+                number: p.number || 0,
+                x: p.x || 50,
+                y: p.y || 50,
+                color: p.color || 'bg-blue-600',
+                positionType: p.positionType || 'MED',
+                imageUrl: p.imageUrl || null,
+                locked: p.locked || false
+            }));
+
             await setDoc(doc(db, 'users', user.uid, 'tactics', 'current'), {
-                players: currentPlayers,
+                players: cleanPlayers,
                 updatedAt: new Date()
             });
-            // Feedback handled by UI (maybe a toast later)
         } catch (e) {
             console.error("Error saving tactics: ", e);
-            alert("Error saving: " + e.message);
+            alert("Error al guardar: " + e.message);
         }
     };
 

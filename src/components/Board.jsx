@@ -8,7 +8,6 @@ import AuthButton from './AuthButton';
 import { useTactics } from '../hooks/useTactics';
 import { Pencil, Plus, Save, Share2, Lock } from 'lucide-react';
 
-// Nuevo componente para los items de la lista que permite arrastrarlos
 const DraggableListItem = ({ player, isSelected, isReadOnly, onClick, isDesktop }) => {
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
         id: `sidebar-${player.id}`,
@@ -48,7 +47,7 @@ const DraggableListItem = ({ player, isSelected, isReadOnly, onClick, isDesktop 
             </div>
             <div className="flex-1 min-w-0" >
                 <p className={`font-bold text-sm text-white truncate max-w-full ${!isDesktop && 'text-[10px]'}`}>{player.name || '...'}</p>
-                {!isDesktop && <p className="text-[8px] font-bold text-blue-400/80 uppercase tracking-widest">
+                {!isDesktop && <p className="text-[8px] font-bold text-blue-400/80 uppercase tracking-widest text-center">
                     {player.positionType?.replace('LAT_', 'L').replace('VOL_', 'V')}
                 </p>}
             </div>
@@ -105,24 +104,20 @@ const Board = () => {
         let newX, newY;
 
         if (isFromSidebar) {
-            // Calculamos posición absoluta basada en el puntero
             const pointerX = activatorEvent.clientX + delta.x;
             const pointerY = activatorEvent.clientY + delta.y;
 
-            // Convertir a porcentaje dentro de la cancha
             newX = ((pointerX - rect.left) / rect.width) * 100;
             newY = ((pointerY - rect.top) / rect.height) * 100;
 
-            // Si el drop fue fuera de la cancha, no hacemos nada o lo dejamos en el banco
             if (newX < 0 || newX > 100 || newY < 0 || newY > 100) return;
 
         } else {
-            // Lógica normal de arrastre dentro de la cancha (Delta)
             const deltaPercentX = (delta.x / rect.width) * 100;
             const deltaPercentY = (delta.y / rect.height) * 100;
 
             const player = players.find(p => p.id === playerRealId);
-            if (!player) return;
+            if (!player || player.locked) return;
 
             if (orientation === 'horizontal') {
                 newY = player.y + deltaPercentX;
@@ -137,8 +132,8 @@ const Board = () => {
             if (p.id === playerRealId) {
                 return {
                     ...p,
-                    x: Math.min(100, Math.max(0, newX)),
-                    y: Math.min(100, Math.max(0, newY))
+                    x: Number(Math.min(100, Math.max(0, newX)).toFixed(2)),
+                    y: Number(Math.min(100, Math.max(0, newY)).toFixed(2))
                 };
             }
             return p;
@@ -151,9 +146,13 @@ const Board = () => {
         if (isReadOnly) return;
         const newPlayer = {
             id: `p${Date.now()}`,
-            ...playerData,
+            name: playerData.name || 'NUEVO',
+            number: playerData.number || 0,
+            imageUrl: playerData.imageUrl || null,
+            positionType: playerData.positionType || 'MED',
+            color: playerData.color || 'bg-blue-600',
             x: 50,
-            y: 95, // Aparece en el banco de abajo
+            y: 95,
             locked: false
         };
         setPlayers([...players, newPlayer]);
@@ -180,10 +179,10 @@ const Board = () => {
     };
 
     const handleShare = () => {
-        if (!user) return alert("You must be logged in to share.");
+        if (!user) return alert("Debes iniciar sesión para compartir.");
         const url = `${window.location.origin}?uid=${user.uid}`;
         navigator.clipboard.writeText(url);
-        alert("Enlace copiado! Envíalo a tu equipo: " + url);
+        alert("¡Enlace copiado! Envíalo a tu equipo: " + url);
     };
 
     const handleToggleLock = (id) => {
@@ -292,7 +291,6 @@ const Board = () => {
                             })}
                         </Field>
 
-                        {/* Visual Bench Indicator */}
                         <div
                             className={`absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-slate-900/80 to-transparent border-t border-white/10 pointer-events-none flex items-center justify-center`}
                         >
