@@ -1,11 +1,13 @@
 import React from 'react';
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
+import { Lock, Unlock } from 'lucide-react';
 
-const Player = ({ id, number, name, position, color = 'bg-blue-600', isOverlay, imageUrl }) => {
+const Player = ({ id, number, name, position, color = 'bg-blue-600', isOverlay, imageUrl, locked, onToggleLock }) => {
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
         id: id,
         data: { id, number, name, color, imageUrl },
+        disabled: locked,
     });
 
     const style = {
@@ -39,6 +41,22 @@ const Player = ({ id, number, name, position, color = 'bg-blue-600', isOverlay, 
                     <span className="text-white drop-shadow-md">{number}</span>
                 )}
             </div>
+
+            {/* Lock/Unlock Button */}
+            {!isOverlay && onToggleLock && (
+                <div
+                    onClick={(e) => {
+                        e.stopPropagation(); // Prevent drag/select
+                        onToggleLock();
+                    }}
+                    className={`
+                        absolute -top-2 -right-2 z-50 p-1 rounded-full cursor-pointer shadow-sm border border-white/20 transition-colors
+                        ${locked ? 'bg-red-500 text-white' : 'bg-gray-700/80 text-gray-300 hover:bg-gray-600'}
+                    `}
+                >
+                    {locked ? <Lock size={10} /> : <Unlock size={10} />}
+                </div>
+            )}
 
             {/* Name Label */}
             {!isOverlay && (

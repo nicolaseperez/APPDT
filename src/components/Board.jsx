@@ -13,13 +13,13 @@ const Board = () => {
     // X: 0 (Left Sideline) -> 100 (Right Sideline)
     // Y: 0 (Top Goal) -> 100 (Bottom Goal)
     const initialPlayers = [
-        { id: 'p1', number: 1, name: 'GK', x: 50, y: 90, color: 'bg-yellow-500', positionType: 'ARQ' },
-        { id: 'p2', number: 2, name: 'DEF', x: 20, y: 70, color: 'bg-blue-600', positionType: 'DEF' },
-        { id: 'p3', number: 3, name: 'DEF', x: 50, y: 70, color: 'bg-blue-600', positionType: 'DEF' },
-        { id: 'p4', number: 4, name: 'DEF', x: 80, y: 70, color: 'bg-blue-600', positionType: 'DEF' },
-        { id: 'p5', number: 5, name: 'MID', x: 35, y: 50, color: 'bg-blue-600', positionType: 'MED' },
-        { id: 'p6', number: 6, name: 'MID', x: 65, y: 50, color: 'bg-blue-600', positionType: 'MED' },
-        { id: 'p7', number: 7, name: 'FWD', x: 50, y: 20, color: 'bg-red-600', positionType: 'DEL' },
+        { id: 'p1', number: 1, name: 'GK', x: 50, y: 90, color: 'bg-yellow-500', positionType: 'ARQ', locked: false },
+        { id: 'p2', number: 2, name: 'DEF', x: 20, y: 70, color: 'bg-blue-600', positionType: 'DEF', locked: false },
+        { id: 'p3', number: 3, name: 'DEF', x: 50, y: 70, color: 'bg-blue-600', positionType: 'DEF', locked: false },
+        { id: 'p4', number: 4, name: 'DEF', x: 80, y: 70, color: 'bg-blue-600', positionType: 'DEF', locked: false },
+        { id: 'p5', number: 5, name: 'MID', x: 35, y: 50, color: 'bg-blue-600', positionType: 'MED', locked: false },
+        { id: 'p6', number: 6, name: 'MID', x: 65, y: 50, color: 'bg-blue-600', positionType: 'MED', locked: false },
+        { id: 'p7', number: 7, name: 'FWD', x: 50, y: 20, color: 'bg-red-600', positionType: 'DEL', locked: false },
     ];
 
     const { players, setPlayers, saveTactics, user, isReadOnly, error } = useTactics(initialPlayers);
@@ -89,7 +89,8 @@ const Board = () => {
             id: `p${Date.now()}`,
             ...playerData,
             x: 50,
-            y: 50 // Default center
+            y: 50, // Default center
+            locked: false
         };
         setPlayers([...players, newPlayer]);
         setShowAddForm(false);
@@ -119,6 +120,11 @@ const Board = () => {
         const url = `${window.location.origin}?uid=${user.uid}`;
         navigator.clipboard.writeText(url);
         alert("Enlace copiado! Envíalo a tu equipo: " + url);
+    };
+
+    const handleToggleLock = (id) => {
+        if (isReadOnly) return;
+        setPlayers(players.map(p => p.id === id ? { ...p, locked: !p.locked } : p));
     };
 
     const getVisualPosition = (logicalX, logicalY) => {
@@ -193,6 +199,8 @@ const Board = () => {
                                             position={visualPos}
                                             isOverlay={false}
                                             imageUrl={p.imageUrl}
+                                            locked={p.locked}
+                                            onToggleLock={() => handleToggleLock(p.id)}
                                         />
                                         {/* Selection Indicator */}
                                         {selectedPlayerId === p.id && (
