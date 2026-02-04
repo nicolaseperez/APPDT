@@ -15,16 +15,21 @@ const Field = ({ children, orientation }) => {
         >
             {/* Background Image Layer */}
             {/* 
-         If Vertical (Mobile), we assume the image is Horizontal (Landscape) and rotate it 90deg.
-         We scale it up to cover the rotation gaps if necessary.
+         If Vertical (Mobile), we use geometry to fit the landscape image into vertical container.
+         Parent is approx 3 units wide, 5 tall.
+         We want image to be 5 units wide, 3 tall.
+         W = 167% of Parent W. H = 60% of Parent H.
+         Then centered and rotated.
       */}
             <div
-                className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat transition-transform duration-500"
+                className="absolute z-0 bg-cover bg-center bg-no-repeat pointer-events-none"
                 style={{
                     backgroundImage: "url('/cancha.jpg')",
-                    // If vertical, rotate 90deg. 
-                    // Reduced scale from 1.5 to 1.1 as requested.
-                    transform: isVertical ? 'scale(1.1) rotate(90deg)' : 'none',
+                    top: '50%',
+                    left: '50%',
+                    width: isVertical ? '167%' : '100%',
+                    height: isVertical ? '60%' : '100%',
+                    transform: isVertical ? 'translate(-50%, -50%) rotate(90deg)' : 'translate(-50%, -50%)',
                 }}
             />
 

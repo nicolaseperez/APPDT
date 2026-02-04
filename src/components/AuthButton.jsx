@@ -5,7 +5,6 @@ import { auth, googleProvider } from '../firebase';
 import { LogIn, LogOut } from 'lucide-react';
 
 const AuthButton = () => {
-    // Note: We need to install react-firebase-hooks for easier auth state management
     const [user, loading, error] = useAuthState(auth);
 
     const handleLogin = async () => {
@@ -13,7 +12,7 @@ const AuthButton = () => {
             await signInWithPopup(auth, googleProvider);
         } catch (err) {
             console.error("Login failed:", err);
-            alert("Error al iniciar sesión. Revisa la consola.");
+            alert("Error al iniciar sesión: " + err.message);
         }
     };
 
@@ -22,19 +21,25 @@ const AuthButton = () => {
     };
 
     if (loading) {
-        return <div className="text-xs text-gray-400">Cargando...</div>;
+        return <div className="text-white text-xs animate-pulse">Cargando...</div>;
     }
 
     if (user) {
         return (
-            <div className="flex items-center gap-3 bg-white/5 p-2 rounded-lg border border-white/10 backdrop-blur-md">
-                <img src={user.photoURL} alt={user.displayName} className="w-8 h-8 rounded-full border border-white/20" />
-                <div className="flex-1 overflow-hidden">
-                    <p className="text-xs font-semibold text-white truncate">{user.displayName}</p>
-                    <button onClick={handleLogout} className="flex items-center gap-1 text-[10px] text-red-400 hover:text-red-300">
-                        <LogOut size={10} /> Cerrar Sesión
-                    </button>
-                </div>
+            <div className="flex items-center gap-2 bg-white/10 px-2 py-1 rounded-full border border-white/20">
+                {user.photoURL && (
+                    <img
+                        src={user.photoURL}
+                        alt={user.displayName}
+                        className="w-6 h-6 rounded-full border border-white/30"
+                    />
+                )}
+                <button
+                    onClick={handleLogout}
+                    className="text-white text-xs hover:text-red-300 transition-colors font-medium"
+                >
+                    Salir
+                </button>
             </div>
         );
     }
@@ -42,10 +47,10 @@ const AuthButton = () => {
     return (
         <button
             onClick={handleLogin}
-            className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shadow-lg shadow-blue-900/20 whitespace-nowrap"
+            className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg transition-transform active:scale-95 flex items-center gap-1.5"
         >
             <LogIn size={14} />
-            Iniciar Sesión con Google
+            <span>Iniciar Sesión con Google</span>
         </button>
     );
 };
