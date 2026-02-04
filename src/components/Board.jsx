@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { DndContext, useSensor, useSensors, PointerSensor, DragOverlay } from '@dnd-kit/core';
+import { DndContext, useSensor, useSensors, PointerSensor, DragOverlay, useDraggable } from '@dnd-kit/core';
 import Field from './Field';
 import Player from './Player';
 import { useMediaQuery } from '../hooks/useMediaQuery';
@@ -7,6 +7,55 @@ import PlayerForm from './PlayerForm';
 import AuthButton from './AuthButton';
 import { useTactics } from '../hooks/useTactics';
 import { Pencil, Plus, Save, Share2, Lock } from 'lucide-react';
+
+// Nuevo componente para los items de la lista que permite arrastrarlos
+const DraggableListItem = ({ player, isSelected, isReadOnly, onClick, isDesktop }) => {
+    const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+        id: `sidebar-${player.id}`,
+        data: { ...player, fromSidebar: true },
+        disabled: isReadOnly,
+    });
+
+    const style = transform ? {
+        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+        zIndex: 100,
+        opacity: 0.5,
+    } : undefined;
+
+    return (
+        <div
+            ref={setNodeRef}
+            {...listeners}
+            {...attributes}
+            onClick={onClick}
+            style={style}
+            className={`
+                flex items-center gap-3 rounded-2xl border transition-all duration-300
+                ${isSelected ? 'bg-blue-600/20 border-blue-500 scale-[1.02]' : 'bg-white/5 border-white/5 hover:bg-white/10'}
+                ${isReadOnly ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'}
+                ${isDesktop ? 'p-3' : 'flex-col p-3 w-16 justify-center text-center'}
+                ${isDragging ? 'invisible' : ''}
+            `}
+        >
+            <div className={`
+                rounded-2xl flex items-center justify-center text-xs font-black text-white border border-white/10 shadow-lg overflow-hidden
+                ${player.color} ${player.imageUrl ? 'bg-white' : ''}
+                ${isDesktop ? 'w-10 h-10' : 'w-12 h-12 shadow-xl'}
+            `}>
+                {player.imageUrl ? (
+                    <img src={player.imageUrl} alt={player.name} className="w-full h-full object-cover" />
+                ) : player.number}
+            </div>
+            <div className="flex-1 min-w-0" >
+                <p className={`font-bold text-sm text-white truncate max-w-full ${!isDesktop && 'text-[10px]'}`}>{player.name || '...'}</p>
+                {!isDesktop && <p className="text-[8px] font-bold text-blue-400/80 uppercase tracking-widest">
+                    {player.positionType?.replace('LAT_', 'L').replace('VOL_', 'V')}
+                </p>}
+            </div>
+            {isDesktop && !isReadOnly && <Pencil size={14} className="text-gray-500 opacity-40" />}
+        </div>
+    );
+};
 
 const Board = () => {
     const initialPlayers = [
@@ -44,28 +93,48 @@ const Board = () => {
 
     const handleDragEnd = (event) => {
         if (isReadOnly) return;
-        const { active, delta } = event;
+        const { active, delta, activatorEvent } = event;
         const id = active.id;
+        const isFromSidebar = String(id).startsWith('sidebar-');
+        const playerRealId = isFromSidebar ? id.replace('sidebar-', '') : id;
 
         const field = document.getElementById('field-container');
         if (!field) return;
         const rect = field.getBoundingClientRect();
 
-        const deltaPercentX = (delta.x / rect.width) * 100;
-        const deltaPercentY = (delta.y / rect.height) * 100;
+        let newX, newY;
+
+        if (isFromSidebar) {
+            // Calculamos posición absoluta basada en el puntero
+            const pointerX = activatorEvent.clientX + delta.x;
+            const pointerY = activatorEvent.clientY + delta.y;
+
+            // Convertir a porcentaje dentro de la cancha
+            newX = ((pointerX - rect.left) / rect.width) * 100;
+            newY = ((pointerY - rect.top) / rect.height) * 100;
+
+            // Si el drop fue fuera de la cancha, no hacemos nada o lo dejamos en el banco
+            if (newX < 0 || newX > 100 || newY < 0 || newY > 100) return;
+
+        } else {
+            // Lógica normal de arrastre dentro de la cancha (Delta)
+            const deltaPercentX = (delta.x / rect.width) * 100;
+            const deltaPercentY = (delta.y / rect.height) * 100;
+
+            const player = players.find(p => p.id === playerRealId);
+            if (!player) return;
+
+            if (orientation === 'horizontal') {
+                newY = player.y + deltaPercentX;
+                newX = player.x - deltaPercentY;
+            } else {
+                newX = player.x + deltaPercentX;
+                newY = player.y + deltaPercentY;
+            }
+        }
 
         setPlayers((prev) => prev.map(p => {
-            if (p.id === id) {
-                let newX, newY;
-
-                if (orientation === 'horizontal') {
-                    newY = p.y + deltaPercentX;
-                    newX = p.x - deltaPercentY;
-                } else {
-                    newX = p.x + deltaPercentX;
-                    newY = p.y + deltaPercentY;
-                }
-
+            if (p.id === playerRealId) {
                 return {
                     ...p,
                     x: Math.min(100, Math.max(0, newX)),
@@ -84,7 +153,7 @@ const Board = () => {
             id: `p${Date.now()}`,
             ...playerData,
             x: 50,
-            y: 95, // Place at the bottom (substitute bench area) by default
+            y: 95, // Aparece en el banco de abajo
             locked: false
         };
         setPlayers([...players, newPlayer]);
@@ -133,8 +202,8 @@ const Board = () => {
 
     const groupedPlayers = {
         'ARQ': players.filter(p => !p.positionType || p.positionType === 'ARQ'),
-        'DEF': players.filter(p => p.positionType === 'DEF' || p.positionType === 'LAT_IZQ' || p.positionType === 'LAT_DER'),
-        'MED': players.filter(p => p.positionType === 'MED' || p.positionType === 'VOL_IZQ' || p.positionType === 'VOL_DER'),
+        'DEF': players.filter(p => ['DEF', 'LAT_IZQ', 'LAT_DER'].includes(p.positionType)),
+        'MED': players.filter(p => ['MED', 'VOL_IZQ', 'VOL_DER'].includes(p.positionType)),
         'DEL': players.filter(p => p.positionType === 'DEL'),
     };
     const groupLabels = {
@@ -222,6 +291,13 @@ const Board = () => {
                                 );
                             })}
                         </Field>
+
+                        {/* Visual Bench Indicator */}
+                        <div
+                            className={`absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-slate-900/80 to-transparent border-t border-white/10 pointer-events-none flex items-center justify-center`}
+                        >
+                            <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em]">Banco de Suplentes</span>
+                        </div>
                     </div>
 
                     {isDesktop && (
@@ -230,26 +306,19 @@ const Board = () => {
                         </div>
                     )}
 
-                    {!isDesktop && <div className="h-32 w-full flex-shrink-0" />}
+                    {!isDesktop && <div className="h-40 w-full flex-shrink-0" />}
                 </div>
 
                 <div className={`
                     bg-slate-900/80 backdrop-blur-2xl border-l border-white/10 text-white shadow-2xl z-50
                     ${isDesktop
                         ? 'w-80 h-full p-6 flex flex-col'
-                        : 'fixed bottom-0 left-0 right-0 h-auto max-h-[35vh] rounded-t-[2.5rem] p-5 flex flex-col border-t border-white/10'
+                        : 'fixed bottom-0 left-0 right-0 h-auto max-h-[38vh] rounded-t-[2.5rem] p-5 flex flex-col border-t border-white/10'
                     }
                 `}>
                     {error && (
                         <div className="bg-red-500/20 text-red-200 p-2 rounded-xl text-xs mb-3 border border-red-500/30">
                             {error}
-                        </div>
-                    )}
-
-                    {isReadOnly && (
-                        <div className="bg-blue-500/10 text-blue-300 p-2 rounded-xl text-[10px] font-bold uppercase tracking-widest mb-3 border border-blue-500/20 flex items-center justify-center gap-2">
-                            <Lock size={12} />
-                            MODO LECTURA
                         </div>
                     )}
 
@@ -264,31 +333,14 @@ const Board = () => {
 
                         <div className="flex gap-2 items-center">
                             {isDesktop && <AuthButton />}
-
                             {user && !isReadOnly && (
                                 <>
-                                    <button
-                                        onClick={handleShare}
-                                        className="bg-white/5 hover:bg-white/10 text-white p-2.5 rounded-xl transition-all shadow-lg border border-white/10 active:scale-90"
-                                        title="Compartir"
-                                    >
-                                        <Share2 size={isDesktop ? 22 : 18} />
-                                    </button>
-                                    <button
-                                        onClick={handleSave}
-                                        disabled={isSaving}
-                                        className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white p-2.5 rounded-xl transition-all shadow-lg active:scale-90"
-                                        title="Guardar"
-                                    >
-                                        <Save size={isDesktop ? 22 : 18} className={isSaving ? 'animate-spin' : ''} />
-                                    </button>
+                                    <button onClick={handleShare} className="bg-white/5 hover:bg-white/10 text-white p-2.5 rounded-xl transition-all border border-white/10 active:scale-90"><Share2 size={isDesktop ? 22 : 18} /></button>
+                                    <button onClick={handleSave} disabled={isSaving} className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white p-2.5 rounded-xl transition-all active:scale-90"><Save size={isDesktop ? 22 : 18} className={isSaving ? 'animate-spin' : ''} /></button>
                                 </>
                             )}
                             {!isReadOnly && (
-                                <button
-                                    onClick={() => { setShowAddForm(true); setSelectedPlayerId(null); }}
-                                    className="bg-emerald-600 hover:bg-emerald-500 text-white p-2.5 rounded-xl transition-all shadow-xl shadow-emerald-900/20 flex items-center gap-1 active:scale-95"
-                                >
+                                <button onClick={() => { setShowAddForm(true); setSelectedPlayerId(null); }} className="bg-emerald-600 hover:bg-emerald-500 text-white p-2.5 rounded-xl transition-all shadow-xl shadow-emerald-900/20 flex items-center gap-1 active:scale-95">
                                     <Plus size={isDesktop ? 22 : 18} /> <span className="text-xs font-bold hidden md:inline ml-1 uppercase">Agregar</span>
                                 </button>
                             )}
@@ -296,42 +348,23 @@ const Board = () => {
                         </div>
                     </div>
 
-                    <div className={`flex-1 ${isDesktop ? 'overflow-y-auto space-y-6 pr-1' : 'overflow-x-auto flex gap-4 items-center pb-4 scrollbar-hide touch-pan-x'}`}>
+                    <div className={`flex-1 ${isDesktop ? 'overflow-y-auto space-y-6 pr-1' : 'overflow-x-auto flex gap-4 items-center pb-6 scrollbar-hide touch-pan-x'}`}>
                         {['ARQ', 'DEF', 'MED', 'DEL'].map(group => {
                             const groupPlayers = groupedPlayers[group];
                             if (groupPlayers.length === 0) return null;
-
                             return (
-                                <div key={group} className={`${isDesktop ? 'animate-in slide-in-from-right-4 duration-300' : 'flex flex-row gap-3 items-center flex-shrink-0 border-r border-white/5 pr-4 last:border-0'}`}>
+                                <div key={group} className={`${isDesktop ? '' : 'flex flex-row gap-3 items-center flex-shrink-0 border-r border-white/5 pr-4 last:border-0'}`}>
                                     {isDesktop && <h4 className="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-3 ml-1">{groupLabels[group]}</h4>}
-
                                     <div className={`${isDesktop ? 'grid grid-cols-1 gap-2.5' : 'flex gap-3'}`}>
                                         {groupPlayers.map(p => (
-                                            <div
+                                            <DraggableListItem
                                                 key={p.id}
+                                                player={p}
+                                                isSelected={selectedPlayerId === p.id}
+                                                isReadOnly={isReadOnly}
+                                                isDesktop={isDesktop}
                                                 onClick={() => !isReadOnly && setSelectedPlayerId(p.id)}
-                                                className={`
-                                                        flex items-center gap-3 rounded-2xl border transition-all duration-300
-                                                        ${selectedPlayerId === p.id ? 'bg-blue-600/20 border-blue-500 scale-[1.02]' : 'bg-white/5 border-white/5 hover:bg-white/10'}
-                                                        ${isReadOnly ? 'cursor-default' : 'cursor-pointer'}
-                                                        ${isDesktop ? 'p-3' : 'flex-col p-3 w-16 justify-center text-center'}
-                                                    `}
-                                            >
-                                                <div className={`
-                                                        rounded-2xl flex items-center justify-center text-xs font-black text-white border border-white/10 shadow-lg overflow-hidden transition-transform
-                                                        ${p.color} ${p.imageUrl ? 'bg-white' : ''}
-                                                        ${isDesktop ? 'w-10 h-10' : 'w-12 h-12 shadow-xl'}
-                                                    `}>
-                                                    {p.imageUrl ? (
-                                                        <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover" />
-                                                    ) : p.number}
-                                                </div>
-                                                <div className="flex-1 min-w-0" >
-                                                    <p className={`font-bold text-sm text-white truncate max-w-full ${!isDesktop && 'text-[10px]'}`}>{p.name || '...'}</p>
-                                                    {!isDesktop && <p className="text-[8px] font-bold text-blue-400/80 uppercase tracking-widest">{group}</p>}
-                                                </div>
-                                                {isDesktop && !isReadOnly && <Pencil size={14} className="text-gray-500 opacity-0 group-hover:opacity-100" />}
-                                            </div>
+                                            />
                                         ))}
                                     </div>
                                 </div>
@@ -343,12 +376,10 @@ const Board = () => {
 
             <DragOverlay>
                 {activeId ? (
-                    <Player
-                        id={activeId}
-                        number={players.find(p => p.id === activeId)?.number}
-                        imageUrl={players.find(p => p.id === activeId)?.imageUrl}
-                        isOverlay
-                    />
+                    (() => {
+                        const p = players.find(p => p.id === (String(activeId).startsWith('sidebar-') ? activeId.replace('sidebar-', '') : activeId));
+                        return <Player id={activeId} number={p?.number} imageUrl={p?.imageUrl} isOverlay />;
+                    })()
                 ) : null}
             </DragOverlay>
         </DndContext>
