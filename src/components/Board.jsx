@@ -84,7 +84,7 @@ const Board = () => {
             id: `p${Date.now()}`,
             ...playerData,
             x: 50,
-            y: 50,
+            y: 95, // Place at the bottom (substitute bench area) by default
             locked: false
         };
         setPlayers([...players, newPlayer]);
@@ -133,8 +133,8 @@ const Board = () => {
 
     const groupedPlayers = {
         'ARQ': players.filter(p => !p.positionType || p.positionType === 'ARQ'),
-        'DEF': players.filter(p => p.positionType === 'DEF'),
-        'MED': players.filter(p => p.positionType === 'MED'),
+        'DEF': players.filter(p => p.positionType === 'DEF' || p.positionType === 'LAT_IZQ' || p.positionType === 'LAT_DER'),
+        'MED': players.filter(p => p.positionType === 'MED' || p.positionType === 'VOL_IZQ' || p.positionType === 'VOL_DER'),
         'DEL': players.filter(p => p.positionType === 'DEL'),
     };
     const groupLabels = {
@@ -151,15 +151,12 @@ const Board = () => {
         >
             <div className="h-screen w-full flex flex-col md:flex-row overflow-hidden bg-slate-950 font-sans">
 
-                {/* Modal Overlay / Form */}
                 {isFormOpen && (
                     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                        {/* Blur Backdrop */}
                         <div
                             className="absolute inset-0 bg-slate-950/60 backdrop-blur-md animate-in fade-in duration-300"
                             onClick={() => { setSelectedPlayerId(null); setShowAddForm(false); }}
                         />
-                        {/* Form Container */}
                         <div className="relative z-10 w-full flex justify-center overflow-hidden">
                             <PlayerForm
                                 selectedPlayer={selectedPlayer}
@@ -331,7 +328,7 @@ const Board = () => {
                                                 </div>
                                                 <div className="flex-1 min-w-0" >
                                                     <p className={`font-bold text-sm text-white truncate max-w-full ${!isDesktop && 'text-[10px]'}`}>{p.name || '...'}</p>
-                                                    {!isDesktop && <p className="text-[8px] font-bold text-blue-400/80 uppercase tracking-tighter">{group}</p>}
+                                                    {!isDesktop && <p className="text-[8px] font-bold text-blue-400/80 uppercase tracking-widest">{group}</p>}
                                                 </div>
                                                 {isDesktop && !isReadOnly && <Pencil size={14} className="text-gray-500 opacity-0 group-hover:opacity-100" />}
                                             </div>

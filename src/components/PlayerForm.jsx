@@ -6,7 +6,7 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 const PlayerForm = ({ selectedPlayer, onSave, onDelete, onCancel, onClose }) => {
     const [name, setName] = useState('');
     const [number, setNumber] = useState('');
-    const [positionType, setPositionType] = useState('MED'); // ARQ, DEF, MED, DEL
+    const [positionType, setPositionType] = useState('MED');
     const [color, setColor] = useState('bg-blue-600');
     const [imageFile, setImageFile] = useState(null);
     const [uploading, setUploading] = useState(false);
@@ -30,14 +30,21 @@ const PlayerForm = ({ selectedPlayer, onSave, onDelete, onCancel, onClose }) => 
 
     const handlePositionChange = (type) => {
         setPositionType(type);
-        // Auto-set color based on position hidden but kept for logic
         switch (type) {
             case 'ARQ': setColor('bg-yellow-500'); break;
-            case 'DEF': setColor('bg-blue-600'); break;
-            case 'MED': setColor('bg-emerald-600'); break;
+            case 'DEF':
+            case 'LAT_IZQ':
+            case 'LAT_DER': setColor('bg-blue-600'); break;
+            case 'MED':
+            case 'VOL_IZQ':
+            case 'VOL_DER': setColor('bg-emerald-600'); break;
             case 'DEL': setColor('bg-red-600'); break;
             default: setColor('bg-blue-600');
         }
+    };
+
+    const handleNameChange = (val) => {
+        setName(val.toUpperCase()); // Forzar mayúsculas
     };
 
     const handleImageChange = (e) => {
@@ -66,7 +73,7 @@ const PlayerForm = ({ selectedPlayer, onSave, onDelete, onCancel, onClose }) => 
 
         onSave({
             id: selectedPlayer ? selectedPlayer.id : undefined,
-            name,
+            name: name.trim(),
             number: number ? parseInt(number) : 0,
             color,
             positionType,
@@ -78,7 +85,11 @@ const PlayerForm = ({ selectedPlayer, onSave, onDelete, onCancel, onClose }) => 
     const positionOptions = [
         { id: 'ARQ', label: 'Arquero' },
         { id: 'DEF', label: 'Defensor' },
+        { id: 'LAT_IZQ', label: 'Lateral Izquierdo' },
+        { id: 'LAT_DER', label: 'Lateral Derecho' },
         { id: 'MED', label: 'Mediocampista' },
+        { id: 'VOL_IZQ', label: 'Volante Izquierdo' },
+        { id: 'VOL_DER', label: 'Volante Derecho' },
         { id: 'DEL', label: 'Delantero' },
     ];
 
@@ -88,13 +99,12 @@ const PlayerForm = ({ selectedPlayer, onSave, onDelete, onCancel, onClose }) => 
                 <h3 className="text-xl font-black text-white flex items-center gap-2 uppercase tracking-tighter">
                     {selectedPlayer ? 'Editar Jugador' : 'Nuevo Jugador'}
                 </h3>
-                <button onClick={onClose} className="bg-white/5 hover:bg-white/10 p-2 rounded-full transition-colors">
+                <button type="button" onClick={onClose} className="bg-white/5 hover:bg-white/10 p-2 rounded-full transition-colors">
                     <X size={20} className="text-white" />
                 </button>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Image Upload - More Professional */}
                 <div className="flex flex-col items-center gap-2">
                     <div className="relative group w-28 h-28">
                         <input
@@ -123,7 +133,6 @@ const PlayerForm = ({ selectedPlayer, onSave, onDelete, onCancel, onClose }) => 
                 </div>
 
                 <div className="space-y-4">
-                    {/* Name Input */}
                     <div className="relative">
                         <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest ml-1 mb-1 block">Nombre Completo</label>
                         <div className="relative">
@@ -131,16 +140,15 @@ const PlayerForm = ({ selectedPlayer, onSave, onDelete, onCancel, onClose }) => 
                             <input
                                 type="text"
                                 value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 pl-10 pr-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-medium"
-                                placeholder="Ej: Lionel Messi"
+                                onChange={(e) => handleNameChange(e.target.value)}
+                                className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 pl-10 pr-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-medium uppercase"
+                                placeholder="EJ: LIONEL MESSI"
                                 required
                             />
                         </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
-                        {/* Number Input */}
                         <div className="relative">
                             <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest ml-1 mb-1 block">Dorsal</label>
                             <div className="relative">
@@ -155,7 +163,6 @@ const PlayerForm = ({ selectedPlayer, onSave, onDelete, onCancel, onClose }) => 
                             </div>
                         </div>
 
-                        {/* Position Input */}
                         <div className="relative">
                             <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest ml-1 mb-1 block">Posición</label>
                             <div className="relative">
@@ -196,12 +203,12 @@ const PlayerForm = ({ selectedPlayer, onSave, onDelete, onCancel, onClose }) => 
                         {uploading ? (
                             <div className="flex items-center gap-2">
                                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                <span>Subiendo...</span>
+                                <span>SUBIENDO...</span>
                             </div>
                         ) : (
                             <>
                                 <Save size={20} />
-                                <span>GUARDAR JUGADOR</span>
+                                <span className="uppercase">Guardar Jugador</span>
                             </>
                         )}
                     </button>
