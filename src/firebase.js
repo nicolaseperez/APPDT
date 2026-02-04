@@ -14,6 +14,11 @@ const firebaseConfig = {
     measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
+// Debug: Check if keys are missing
+if (!firebaseConfig.apiKey) {
+    console.error("Firebase API Key is missing! Check your Environment Variables.");
+}
+
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
