@@ -4,26 +4,21 @@ import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
+// La mayoría de estos valores son públicos por naturaleza en Firebase.
+// Solo mantenemos la API KEY como secreta para evitar alertas de seguridad.
 const firebaseConfig = {
-    // Keep the API KEY with the old name since it was working
     apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-    // Use new names for the others to force a fresh link in Vercel
-    authDomain: import.meta.env.VITE_APP_AUTH_DOMAIN,
-    projectId: import.meta.env.VITE_APP_PROJECT_ID,
-    storageBucket: import.meta.env.VITE_APP_STORAGE_BUCKET,
-    messagingSenderId: import.meta.env.VITE_APP_MESSAGING_SENDER_ID,
-    appId: import.meta.env.VITE_APP_APP_ID,
-    measurementId: import.meta.env.VITE_APP_MEASUREMENT_ID
+    authDomain: "appdtfirebase.firebaseapp.com",
+    projectId: "appdtfirebase",
+    storageBucket: "appdtfirebase.firebasestorage.app",
+    messagingSenderId: "672765118501",
+    appId: "1:672765118501:web:d7142ed0049509efbf57cc",
+    measurementId: "G-KSE478TCZC"
 };
 
-console.log("NUEVA Configuración de Firebase cargada:", {
-    hasApiKey: !!firebaseConfig.apiKey,
-    hasProjectId: !!firebaseConfig.projectId,
-    projectIdValue: firebaseConfig.projectId // Para ver si carga 'appdtfirebase'
-});
-
-if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
-    console.error("CRITICAL: Firebase configuration is missing essential fields. Check NEW Vercel Env Vars.");
+// Debug para verificar que la API KEY llegue
+if (!firebaseConfig.apiKey) {
+    console.error("Firebase API Key is still missing from Vercel Env Vars.");
 }
 
 // Initialize Firebase
