@@ -14,14 +14,21 @@ const firebaseConfig = {
     measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
-// Debug: Check if keys are missing
-if (!firebaseConfig.apiKey) {
-    console.error("Firebase API Key is missing! Check your Environment Variables.");
+console.log("Configuración de Firebase cargada:", {
+    hasApiKey: !!firebaseConfig.apiKey,
+    hasAuthDomain: !!firebaseConfig.authDomain,
+    hasProjectId: !!firebaseConfig.projectId,
+    hasStorageBucket: !!firebaseConfig.storageBucket,
+    hasAppId: !!firebaseConfig.appId
+});
+
+if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+    console.error("CRITICAL: Firebase configuration is missing essential fields. Check Vercel Env Vars.");
 }
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+const analytics = typeof window !== 'undefined' ? getAnalytics(app) : null;
 
 // Services
 export const auth = getAuth(app);
