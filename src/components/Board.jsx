@@ -152,7 +152,7 @@ const Board = () => {
             positionType: playerData.positionType || 'MED',
             color: playerData.color || 'bg-blue-600',
             x: 50,
-            y: 95,
+            y: 95, // Spawn in bench area
             locked: false
         };
         setPlayers([...players, newPlayer]);
@@ -169,6 +169,11 @@ const Board = () => {
         if (isReadOnly) return;
         setPlayers(players.filter(p => p.id !== id));
         setSelectedPlayerId(null);
+    };
+
+    const handleRemoveFromField = (id) => {
+        if (isReadOnly) return;
+        setPlayers(players.map(p => p.id === id ? { ...p, x: 50, y: 95, locked: false } : p));
     };
 
     const handleSave = async () => {
@@ -274,6 +279,7 @@ const Board = () => {
                                             imageUrl={p.imageUrl}
                                             locked={p.locked}
                                             onToggleLock={() => handleToggleLock(p.id)}
+                                            onRemoveFromField={() => handleRemoveFromField(p.id)}
                                         />
                                         {selectedPlayerId === p.id && (
                                             <div
