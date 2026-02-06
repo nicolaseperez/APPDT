@@ -28,7 +28,8 @@ export function useTactics(initialPlayers) {
                         number: p.number || 0,
                         name: p.name || 'JUGADOR',
                         positionType: p.positionType || 'MED',
-                        color: p.color || 'bg-blue-600'
+                        color: p.color || 'bg-blue-600',
+                        onField: p.onField ?? true // Default to true for existing players
                     }));
                     setPlayers(sanitized);
                 }
@@ -53,12 +54,13 @@ export function useTactics(initialPlayers) {
                 id: p.id || `p${Date.now()}`,
                 name: p.name || '',
                 number: p.number || 0,
-                x: p.x || 50,
-                y: p.y || 50,
+                x: p.x ?? 50,
+                y: p.y ?? 50,
                 color: p.color || 'bg-blue-600',
                 positionType: p.positionType || 'MED',
                 imageUrl: p.imageUrl || null,
-                locked: p.locked || false
+                locked: p.locked || false,
+                onField: p.onField ?? false
             }));
 
             await setDoc(doc(db, 'users', user.uid, 'tactics', 'current'), {

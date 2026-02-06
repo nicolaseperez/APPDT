@@ -58,13 +58,13 @@ const DraggableListItem = ({ player, isSelected, isReadOnly, onClick, isDesktop 
 
 const Board = () => {
     const initialPlayers = [
-        { id: 'p1', number: 1, name: 'GK', x: 50, y: 90, color: 'bg-yellow-500', positionType: 'ARQ', locked: false },
-        { id: 'p2', number: 2, name: 'DEF', x: 20, y: 70, color: 'bg-blue-600', positionType: 'DEF', locked: false },
-        { id: 'p3', number: 3, name: 'DEF', x: 50, y: 70, color: 'bg-blue-600', positionType: 'DEF', locked: false },
-        { id: 'p4', number: 4, name: 'DEF', x: 80, y: 70, color: 'bg-blue-600', positionType: 'DEF', locked: false },
-        { id: 'p5', number: 5, name: 'MID', x: 35, y: 50, color: 'bg-emerald-600', positionType: 'MED', locked: false },
-        { id: 'p6', number: 6, name: 'MID', x: 65, y: 50, color: 'bg-emerald-600', positionType: 'MED', locked: false },
-        { id: 'p7', number: 7, name: 'FWD', x: 50, y: 20, color: 'bg-red-600', positionType: 'DEL', locked: false },
+        { id: 'p1', number: 1, name: 'GK', x: 50, y: 90, color: 'bg-yellow-500', positionType: 'ARQ', locked: false, onField: true },
+        { id: 'p2', number: 2, name: 'DEF', x: 20, y: 70, color: 'bg-blue-600', positionType: 'DEF', locked: false, onField: true },
+        { id: 'p3', number: 3, name: 'DEF', x: 50, y: 70, color: 'bg-blue-600', positionType: 'DEF', locked: false, onField: true },
+        { id: 'p4', number: 4, name: 'DEF', x: 80, y: 70, color: 'bg-blue-600', positionType: 'DEF', locked: false, onField: true },
+        { id: 'p5', number: 5, name: 'MID', x: 35, y: 50, color: 'bg-emerald-600', positionType: 'MED', locked: false, onField: true },
+        { id: 'p6', number: 6, name: 'MID', x: 65, y: 50, color: 'bg-emerald-600', positionType: 'MED', locked: false, onField: true },
+        { id: 'p7', number: 7, name: 'FWD', x: 50, y: 20, color: 'bg-red-600', positionType: 'DEL', locked: false, onField: true },
     ];
 
     const { players, setPlayers, saveTactics, user, isReadOnly, error } = useTactics(initialPlayers);
@@ -133,7 +133,8 @@ const Board = () => {
                 return {
                     ...p,
                     x: Number(Math.min(100, Math.max(0, newX)).toFixed(2)),
-                    y: Number(Math.min(100, Math.max(0, newY)).toFixed(2))
+                    y: Number(Math.min(100, Math.max(0, newY)).toFixed(2)),
+                    onField: true
                 };
             }
             return p;
@@ -152,8 +153,9 @@ const Board = () => {
             positionType: playerData.positionType || 'MED',
             color: playerData.color || 'bg-blue-600',
             x: 50,
-            y: 95, // Spawn in bench area
-            locked: false
+            y: 95,
+            locked: false,
+            onField: false
         };
         setPlayers([...players, newPlayer]);
         setShowAddForm(false);
@@ -173,7 +175,7 @@ const Board = () => {
 
     const handleRemoveFromField = (id) => {
         if (isReadOnly) return;
-        setPlayers(players.map(p => p.id === id ? { ...p, x: 50, y: 95, locked: false } : p));
+        setPlayers(players.map(p => p.id === id ? { ...p, onField: false, locked: false } : p));
     };
 
     const handleSave = async () => {
@@ -259,7 +261,7 @@ const Board = () => {
                         onClick={() => setSelectedPlayerId(null)}
                     >
                         <Field orientation={orientation}>
-                            {players.map((p) => {
+                            {players.filter(p => p.onField).map((p) => {
                                 const visualPos = getVisualPosition(p.x, p.y);
                                 return (
                                     <div key={p.id} onClick={(e) => {

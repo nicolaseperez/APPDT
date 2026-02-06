@@ -47,6 +47,7 @@ const Player = ({ id, number, name, position, color = 'bg-blue-600', isOverlay, 
                         e.stopPropagation();
                         onToggleLock();
                     }}
+                    onPointerDown={(e) => e.stopPropagation()}
                     className={`
                         absolute -top-1 -right-3 z-50 p-1.5 rounded-full cursor-pointer shadow-lg border border-white/30 transition-all active:scale-90
                         ${locked ? 'bg-red-500 text-white' : 'bg-slate-800 text-gray-400 hover:text-white'}
@@ -64,6 +65,7 @@ const Player = ({ id, number, name, position, color = 'bg-blue-600', isOverlay, 
                         e.stopPropagation();
                         onRemoveFromField();
                     }}
+                    onPointerDown={(e) => e.stopPropagation()}
                     className="absolute -top-1 -left-3 z-50 p-1.5 rounded-full cursor-pointer shadow-lg border border-white/30 bg-slate-800 text-gray-400 hover:text-white hover:bg-red-500 transition-all active:scale-90"
                     title="Mandar al banco"
                 >
