@@ -6,9 +6,9 @@ import { useMediaQuery } from '../hooks/useMediaQuery';
 import PlayerForm from './PlayerForm';
 import AuthButton from './AuthButton';
 import { useTactics } from '../hooks/useTactics';
-import { Pencil, Plus, Save, Share2, Lock } from 'lucide-react';
+import { Pencil, Plus, Save, Share2, Lock, UserCheck, UserPlus, UserMinus, ChevronRight, CheckCircle2, Circle } from 'lucide-react';
 
-const DraggableListItem = ({ player, isSelected, isReadOnly, onClick, isDesktop, customColor }) => {
+const DraggableListItem = ({ player, isSelected, isReadOnly, onClick, isDesktop, customColor, onToggleConfirm }) => {
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
         id: `sidebar-${player.id}`,
         data: { ...player, fromSidebar: true },
@@ -39,20 +39,23 @@ const DraggableListItem = ({ player, isSelected, isReadOnly, onClick, isDesktop,
     return (
         <div
             ref={setNodeRef}
-            {...listeners}
-            {...attributes}
-            onClick={onClick}
             style={style}
             className={`
-                flex items-center gap-3 rounded-2xl border transition-all duration-300
+                group flex items-center gap-2 rounded-2xl border transition-all duration-300
                 ${isSelected ? 'bg-blue-600/20 border-blue-500 scale-[1.02]' : 'bg-white/5 border-white/5 hover:bg-white/10'}
                 ${isReadOnly ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'}
-                ${isDesktop ? 'p-3' : 'flex-col p-3 w-20 justify-center text-center'}
+                ${isDesktop ? 'p-2' : 'flex-col p-2 w-20 justify-center text-center'}
                 ${isDragging ? 'invisible' : ''}
+                ${player.isConfirmed ? 'opacity-100' : 'opacity-60'}
             `}
         >
-            <div className={`relative flex items-center justify-center shrink-0`}>
-                <svg viewBox="0 0 100 100" className={`${isDesktop ? 'w-10 h-10' : 'w-12 h-12'} drop-shadow-md`}>
+            <div
+                {...listeners}
+                {...attributes}
+                onClick={onClick}
+                className="relative flex items-center justify-center shrink-0 cursor-grab active:cursor-grabbing"
+            >
+                <svg viewBox="0 0 100 100" className={`${isDesktop ? 'w-8 h-8' : 'w-10 h-10'} drop-shadow-md`}>
                     <path
                         d="M25 20 L40 10 L60 10 L75 20 L85 35 L75 45 L75 90 L25 90 L25 45 L15 35 Z"
                         fill={fillColor}
@@ -61,14 +64,41 @@ const DraggableListItem = ({ player, isSelected, isReadOnly, onClick, isDesktop,
                         strokeWidth="1"
                     />
                 </svg>
+                {player.isConfirmed && (
+                    <div className="absolute -top-1 -right-1 bg-emerald-500/90 text-white rounded-full p-0.5 shadow-lg border border-white/20">
+                        <CheckCircle2 size={8} strokeWidth={4} />
+                    </div>
+                )}
             </div>
-            <div className="flex-1 min-w-0" >
-                <p className={`font-bold text-sm text-white truncate max-w-full ${!isDesktop && 'text-[10px]'}`}>{player.name || '...'}</p>
-                {!isDesktop && <p className="text-[8px] font-bold text-blue-400/80 uppercase tracking-widest text-center">
-                    {player.positionType?.replace('LAT_', 'L').replace('VOL_', 'V')}
-                </p>}
+
+            <div className="flex-1 min-w-0 pointer-events-none" >
+                <p className={`font-bold text-xs text-white truncate max-w-full ${!isDesktop && 'text-[9px]'}`}>{player.name || '...'}</p>
+                {isDesktop ? (
+                    <p className="text-[8px] font-bold text-gray-500 uppercase tracking-widest truncate">
+                        {player.positionType?.replace('LAT_', 'L').replace('VOL_', 'V')}
+                    </p>
+                ) : (
+                    <p className="text-[7px] font-bold text-blue-400/80 uppercase tracking-widest text-center">
+                        {player.positionType?.replace('LAT_', 'L').replace('VOL_', 'V')}
+                    </p>
+                )}
             </div>
-            {isDesktop && !isReadOnly && <Pencil size={14} className="text-gray-500 opacity-40" />}
+
+            {!isReadOnly && onToggleConfirm && (
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onToggleConfirm(player.id);
+                    }}
+                    className={`
+                        p-1.5 rounded-lg transition-all active:scale-90
+                        ${player.isConfirmed ? 'text-emerald-500 bg-emerald-500/10 hover:bg-emerald-500/20' : 'text-gray-500 bg-white/5 hover:bg-white/10 opacity-0 group-hover:opacity-100'}
+                    `}
+                    title={player.isConfirmed ? "Quitar de convocados" : "Confirmar convocatoria"}
+                >
+                    {player.isConfirmed ? <UserMinus size={14} /> : <UserPlus size={14} />}
+                </button>
+            )}
         </div>
     );
 };
@@ -133,6 +163,11 @@ const Board = () => {
         setActiveId(event.active.id);
     };
 
+    const handleToggleConfirm = (id) => {
+        if (isReadOnly) return;
+        setPlayers(players.map(p => p.id === id ? { ...p, isConfirmed: !p.isConfirmed, onField: p.isConfirmed ? false : p.onField } : p));
+    };
+
     const handleDragEnd = (event) => {
         if (isReadOnly) return;
         const { active, over, delta, activatorEvent } = event;
@@ -164,7 +199,6 @@ const Board = () => {
             const visualY = ((pointerY - rect.top) / rect.height) * 100;
 
             if (orientation === 'horizontal') {
-                // In horizontal mode: x_visual = y_logical, y_visual = 100 - x_logical
                 newX = 100 - visualY;
                 newY = visualX;
             } else {
@@ -172,7 +206,6 @@ const Board = () => {
                 newY = visualY;
             }
         } else {
-            // Dragging existing player on field
             const deltaPercentX = (delta.x / rect.width) * 100;
             const deltaPercentY = (delta.y / rect.height) * 100;
 
@@ -183,7 +216,6 @@ const Board = () => {
             }
 
             if (orientation === 'horizontal') {
-                // visual X delta changes logical Y, visual Y delta changes logical X (inverted)
                 newY = player.y + deltaPercentX;
                 newX = player.x - deltaPercentY;
             } else {
@@ -198,7 +230,8 @@ const Board = () => {
                     ...p,
                     x: Number(Math.min(100, Math.max(0, newX)).toFixed(2)),
                     y: Number(Math.min(100, Math.max(0, newY)).toFixed(2)),
-                    onField: true
+                    onField: true,
+                    isConfirmed: true // Al arrastrar a la cancha, se confirma automáticamente
                 };
             }
             return p;
@@ -218,7 +251,8 @@ const Board = () => {
             x: 50,
             y: 95,
             locked: false,
-            onField: false
+            onField: false,
+            isConfirmed: false
         };
         setPlayers([...players, newPlayer]);
         setShowAddForm(false);
@@ -269,17 +303,71 @@ const Board = () => {
 
     const selectedPlayer = players.find(p => p.id === selectedPlayerId);
 
-    const groupedPlayers = {
-        'ARQ': players.filter(p => !p.positionType || p.positionType === 'ARQ'),
-        'DEF': players.filter(p => ['DEF', 'LAT_IZQ', 'LAT_DER'].includes(p.positionType)),
-        'MED': players.filter(p => ['MED', 'VOL_IZQ', 'VOL_DER'].includes(p.positionType)),
-        'DEL': players.filter(p => p.positionType === 'DEL'),
-    };
+    const getGrouped = (playerList) => ({
+        'ARQ': playerList.filter(p => !p.positionType || p.positionType === 'ARQ'),
+        'DEF': playerList.filter(p => ['DEF', 'LAT_IZQ', 'LAT_DER'].includes(p.positionType)),
+        'MED': playerList.filter(p => ['MED', 'VOL_IZQ', 'VOL_DER'].includes(p.positionType)),
+        'DEL': playerList.filter(p => p.positionType === 'DEL'),
+    });
+
+    const confirmedPlayers = players.filter(p => p.isConfirmed && !p.onField);
+    const fullSquadPlayers = players;
+
     const groupLabels = {
         'ARQ': 'Arqueros', 'DEF': 'Defensores', 'MED': 'Medios', 'DEL': 'Delanteros'
     };
 
     const isFormOpen = !isReadOnly && (selectedPlayerId || showAddForm);
+
+    const renderPlayerList = (list, title, isMatchSquad = false) => {
+        const grouped = getGrouped(list);
+        const hasPlayers = list.length > 0;
+
+        return (
+            <div className={`space-y-4 ${isDesktop ? 'mb-8' : 'mb-4'}`}>
+                <div className="flex items-center justify-between px-1">
+                    <h4 className="text-[10px] font-black text-blue-400 uppercase tracking-widest flex items-center gap-2">
+                        {isMatchSquad ? <UserCheck size={12} /> : <Plus size={12} />}
+                        {title}
+                        {hasPlayers && <span className="bg-blue-600/20 text-blue-400 px-1.5 py-0.5 rounded text-[8px]">{list.length}</span>}
+                    </h4>
+                </div>
+
+                <div className={`
+                    ${isDesktop ? 'space-y-6' : 'flex gap-3 pb-2 overflow-x-auto scrollbar-hide'}
+                `}>
+                    {['ARQ', 'DEF', 'MED', 'DEL'].map(group => {
+                        const groupPlayers = grouped[group];
+                        if (groupPlayers.length === 0) return null;
+                        return (
+                            <div key={group} className={`${isDesktop ? '' : 'flex flex-row gap-2 items-center flex-shrink-0'}`}>
+                                {isDesktop && groupPlayers.length > 0 && <span className="text-[8px] font-bold text-gray-600 uppercase mb-2 block ml-1">{groupLabels[group]}</span>}
+                                <div className={`${isDesktop ? 'grid grid-cols-1 gap-2' : 'flex gap-2'}`}>
+                                    {groupPlayers.map(p => (
+                                        <DraggableListItem
+                                            key={p.id}
+                                            player={p}
+                                            isSelected={selectedPlayerId === p.id}
+                                            isReadOnly={isReadOnly}
+                                            isDesktop={isDesktop}
+                                            onClick={() => !isReadOnly && setSelectedPlayerId(p.id)}
+                                            customColor={getPlayerColor(p)}
+                                            onToggleConfirm={handleToggleConfirm}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+                {!hasPlayers && (
+                    <div className="py-8 border-2 border-dashed border-white/5 rounded-2xl flex flex-col items-center justify-center text-gray-600">
+                        <p className="text-[10px] font-bold uppercase tracking-tighter">Sin jugadores</p>
+                    </div>
+                )}
+            </div>
+        );
+    };
 
     return (
         <DndContext
@@ -381,7 +469,7 @@ const Board = () => {
                     bg-slate-900/80 backdrop-blur-2xl border-l border-white/10 text-white shadow-2xl z-50
                     ${isDesktop
                         ? 'w-80 h-full p-6 flex flex-col'
-                        : 'fixed bottom-0 left-0 right-0 h-auto max-h-[45vh] rounded-t-[2.5rem] p-5 flex flex-col border-t border-white/10'
+                        : 'fixed bottom-0 left-0 right-0 h-auto max-h-[50vh] rounded-t-[2.5rem] p-5 flex flex-col border-t border-white/10'
                     }
                 `}>
                     {error && (
@@ -396,7 +484,7 @@ const Board = () => {
                                 Equipo <span className="text-xs font-medium bg-blue-600 px-2.5 py-1 rounded-full ml-1 align-middle">{players.length}</span>
                             </h2>
                         ) : (
-                            <div className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">PLANTILLA ({players.length})</div>
+                            <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">PLANTILLA</div>
                         )}
 
                         <div className="flex gap-2 items-center">
@@ -417,28 +505,28 @@ const Board = () => {
                     </div>
 
                     {/* Color Selectors */}
-                    {!isReadOnly && (
-                        <div className="mb-6 space-y-4">
+                    {isDesktop && !isReadOnly && (
+                        <div className="mb-6 space-y-4 bg-white/5 p-4 rounded-3xl border border-white/5">
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Color Jugadores</label>
-                                <div className="flex gap-1.5 overflow-x-auto pb-2 scrollbar-hide">
+                                <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Color Jugadores</label>
+                                <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
                                     {jerseyColors.map((c) => (
                                         <button
                                             key={`team-${c.class}`}
                                             onClick={() => setTeamColor(c.class)}
-                                            className={`w-6 h-6 rounded-full border-2 shrink-0 transition-all ${c.class} ${teamColor === c.class ? 'border-white scale-110' : 'border-transparent opacity-50'}`}
+                                            className={`w-5 h-5 rounded-full border-2 shrink-0 transition-all ${c.class} ${teamColor === c.class ? 'border-white scale-110' : 'border-transparent opacity-40 hover:opacity-100'}`}
                                         />
                                     ))}
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Color Arquero</label>
-                                <div className="flex gap-1.5 overflow-x-auto pb-2 scrollbar-hide">
+                                <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Color Arquero</label>
+                                <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
                                     {jerseyColors.map((c) => (
                                         <button
                                             key={`gk-${c.class}`}
                                             onClick={() => setGkColor(c.class)}
-                                            className={`w-6 h-6 rounded-full border-2 shrink-0 transition-all ${c.class} ${gkColor === c.class ? 'border-white scale-110' : 'border-transparent opacity-50'}`}
+                                            className={`w-5 h-5 rounded-full border-2 shrink-0 transition-all ${c.class} ${gkColor === c.class ? 'border-white scale-110' : 'border-transparent opacity-40 hover:opacity-100'}`}
                                         />
                                     ))}
                                 </div>
@@ -446,29 +534,9 @@ const Board = () => {
                         </div>
                     )}
 
-                    <div className={`flex-1 ${isDesktop ? 'overflow-y-auto space-y-6 pr-1' : 'overflow-x-auto flex gap-4 items-center pb-6 scrollbar-hide touch-pan-x'}`}>
-                        {['ARQ', 'DEF', 'MED', 'DEL'].map(group => {
-                            const groupPlayers = groupedPlayers[group];
-                            if (groupPlayers.length === 0) return null;
-                            return (
-                                <div key={group} className={`${isDesktop ? '' : 'flex flex-row gap-3 items-center flex-shrink-0 border-r border-white/5 pr-4 last:border-0'}`}>
-                                    {isDesktop && <h4 className="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-3 ml-1">{groupLabels[group]}</h4>}
-                                    <div className={`${isDesktop ? 'grid grid-cols-1 gap-2.5' : 'flex gap-3'}`}>
-                                        {groupPlayers.map(p => (
-                                            <DraggableListItem
-                                                key={p.id}
-                                                player={p}
-                                                isSelected={selectedPlayerId === p.id}
-                                                isReadOnly={isReadOnly}
-                                                isDesktop={isDesktop}
-                                                onClick={() => !isReadOnly && setSelectedPlayerId(p.id)}
-                                                customColor={getPlayerColor(p)}
-                                            />
-                                        ))}
-                                    </div>
-                                </div>
-                            );
-                        })}
+                    <div className={`flex-1 overflow-y-auto pr-1 scrollbar-hide`}>
+                        {renderPlayerList(confirmedPlayers, "Convocados / Banco Real", true)}
+                        {renderPlayerList(fullSquadPlayers, "Plantilla Completa", false)}
                     </div>
                 </div>
             </div>

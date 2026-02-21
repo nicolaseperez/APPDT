@@ -30,7 +30,8 @@ export function useTactics(initialPlayers) {
                         name: p.name || 'JUGADOR',
                         positionType: p.positionType || (p.name?.toUpperCase() === 'GK' ? 'ARQ' : 'MED'),
                         color: p.color || 'bg-blue-600',
-                        onField: p.onField ?? true
+                        onField: p.onField ?? true,
+                        isConfirmed: p.isConfirmed ?? (p.onField ?? true)
                     }));
                     setPlayers(sanitized);
                 }
@@ -62,7 +63,8 @@ export function useTactics(initialPlayers) {
                 positionType: p.positionType || 'MED',
                 imageUrl: p.imageUrl || null,
                 locked: p.locked || false,
-                onField: p.onField ?? false
+                onField: p.onField ?? false,
+                isConfirmed: p.isConfirmed ?? p.onField ?? false
             }));
 
             await setDoc(doc(db, 'users', user.uid, 'tactics', 'current'), {
