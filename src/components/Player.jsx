@@ -52,11 +52,11 @@ const JerseyIcon = ({ color, isDragging }) => {
     );
 };
 
-const Player = ({ id, number, name, position, color = 'bg-blue-600', isOverlay, locked, onToggleLock, onRemoveFromField }) => {
+const Player = ({ id, number, name, position, color = 'bg-blue-600', isOverlay, locked, onToggleLock, onRemoveFromField, isReadOnly }) => {
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
         id: id,
         data: { id, number, name, color },
-        disabled: locked,
+        disabled: locked || isReadOnly,
     });
 
     const style = {
@@ -71,12 +71,12 @@ const Player = ({ id, number, name, position, color = 'bg-blue-600', isOverlay, 
     };
 
     return (
-        <div ref={setNodeRef} style={style} {...listeners} {...attributes} className="flex flex-col items-center group cursor-grab active:cursor-grabbing">
+        <div ref={setNodeRef} style={style} {...listeners} {...attributes} className={`flex flex-col items-center group ${isReadOnly ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'}`}>
             {/* Player Jersey */}
             <JerseyIcon color={color} isDragging={isDragging} />
 
             {/* Lock Button (Right Side) */}
-            {!isOverlay && onToggleLock && (
+            {!isOverlay && !isReadOnly && onToggleLock && (
                 <div
                     onClick={(e) => {
                         e.stopPropagation();
@@ -94,7 +94,7 @@ const Player = ({ id, number, name, position, color = 'bg-blue-600', isOverlay, 
             )}
 
             {/* Remove from Field Button (Left Side - 'X') */}
-            {!isOverlay && onRemoveFromField && (
+            {!isOverlay && !isReadOnly && onRemoveFromField && (
                 <div
                     onClick={(e) => {
                         e.stopPropagation();

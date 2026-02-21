@@ -432,6 +432,7 @@ const Board = () => {
                                             locked={p.locked}
                                             onToggleLock={() => handleToggleLock(p.id)}
                                             onRemoveFromField={() => handleRemoveFromField(p.id)}
+                                            isReadOnly={isReadOnly}
                                         />
                                         {selectedPlayerId === p.id && (
                                             <div
@@ -481,14 +482,14 @@ const Board = () => {
                     <div className={`flex justify-between items-center ${isDesktop ? 'mb-6 border-b border-white/10 pb-6' : 'mb-4'}`}>
                         {isDesktop ? (
                             <h2 className="text-2xl font-black text-white uppercase tracking-tighter">
-                                Equipo <span className="text-xs font-medium bg-blue-600 px-2.5 py-1 rounded-full ml-1 align-middle">{players.length}</span>
+                                {isReadOnly ? 'Táctica Compartida' : 'Mi Equipo'} <span className="text-xs font-medium bg-blue-600 px-2.5 py-1 rounded-full ml-1 align-middle">{players.length}</span>
                             </h2>
                         ) : (
-                            <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">PLANTILLA</div>
+                            <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{isReadOnly ? 'TÁCTICA COMPARTIDA' : 'PLANTILLA'}</div>
                         )}
 
                         <div className="flex gap-2 items-center">
-                            {isDesktop && <AuthButton />}
+                            {isDesktop && !isReadOnly && <AuthButton />}
                             {user && !isReadOnly && (
                                 <>
                                     <button onClick={handleShare} className="bg-white/5 hover:bg-white/10 text-white p-2.5 rounded-xl transition-all border border-white/10 active:scale-90"><Share2 size={isDesktop ? 22 : 18} /></button>
@@ -500,7 +501,7 @@ const Board = () => {
                                     <Plus size={isDesktop ? 22 : 18} /> <span className="text-xs font-bold hidden md:inline ml-1 uppercase">Agregar</span>
                                 </button>
                             )}
-                            {!isDesktop && <div className="scale-90 origin-right"><AuthButton /></div>}
+                            {!isDesktop && !isReadOnly && <div className="scale-90 origin-right"><AuthButton /></div>}
                         </div>
                     </div>
 
@@ -535,8 +536,8 @@ const Board = () => {
                     )}
 
                     <div className={`flex-1 overflow-y-auto pr-1 scrollbar-hide`}>
-                        {renderPlayerList(confirmedPlayers, "Convocados / Banco Real", true)}
-                        {renderPlayerList(fullSquadPlayers, "Plantilla Completa", false)}
+                        {renderPlayerList(confirmedPlayers, isReadOnly ? "Suplentes" : "Convocados / Banco Real", true)}
+                        {!isReadOnly && renderPlayerList(fullSquadPlayers, "Plantilla Completa", false)}
                     </div>
                 </div>
             </div>
