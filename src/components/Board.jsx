@@ -48,7 +48,7 @@ const DraggableListItem = ({ player, isSelected, isReadOnly, onClick, isDesktop,
                 ${isSelected ? 'bg-blue-600/20 border-blue-500 scale-[1.02]' : 'bg-white/5 border-white/5 hover:bg-white/10'}
                 ${isReadOnly ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'}
                 ${isDesktop ? 'p-3' : 'flex-col p-2 w-24 justify-center text-center'}
-                ${isDragging ? 'opacity-20' : ''}
+                ${isDragging ? 'opacity-0' : 'opacity-100'}
                 ${player.isConfirmed ? 'opacity-100' : 'opacity-60'}
                 touch-none
             `}
@@ -150,13 +150,7 @@ const Board = () => {
     const sensors = useSensors(
         useSensor(PointerSensor, {
             activationConstraint: {
-                distance: 10,
-            },
-        }),
-        useSensor(TouchSensor, {
-            activationConstraint: {
-                delay: 250,
-                tolerance: 15,
+                distance: 5,
             },
         })
     );
@@ -208,10 +202,10 @@ const Board = () => {
 
             if (orientation === 'horizontal') {
                 // Correct Inverse Landscape Transform:
-                // Base X = visualY
-                // Base Y = 100 - visualX
-                newX = visualY;
-                newY = 100 - visualX;
+                // Lx = 100 - Vy
+                // Ly = Vx
+                newX = 100 - visualY;
+                newY = visualX;
             } else {
                 newX = visualX;
                 newY = visualY;
@@ -235,6 +229,11 @@ const Board = () => {
             }
         }
 
+        if (isNaN(newX) || isNaN(newY)) {
+            setActiveId(null);
+            return;
+        }
+
         setPlayers((prev) => prev.map(p => {
             if (p.id === playerRealId) {
                 return {
@@ -242,7 +241,7 @@ const Board = () => {
                     x: Number(Math.min(100, Math.max(0, newX)).toFixed(2)),
                     y: Number(Math.min(100, Math.max(0, newY)).toFixed(2)),
                     onField: true,
-                    isConfirmed: true // Al arrastrar a la cancha, se confirma automáticamente
+                    isConfirmed: true
                 };
             }
             return p;
@@ -418,7 +417,7 @@ const Board = () => {
                         id="field-container"
                         className={`
                             relative transition-all duration-700 shadow-[0_0_50px_rgba(0,0,0,0.5)] rounded-xl overflow-hidden touch-none
-                            ${isDesktop ? 'w-full max-w-4xl aspect-[16/10]' : 'w-full max-w-sm aspect-[3/5]'} 
+                            ${isDesktop ? 'w-full max-w-4xl aspect-[4/3]' : 'w-full max-w-sm aspect-[3/5]'} 
                         `}
                         onClick={() => setSelectedPlayerId(null)}
                     >
