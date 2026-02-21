@@ -6,7 +6,7 @@ import { useMediaQuery } from '../hooks/useMediaQuery';
 import PlayerForm from './PlayerForm';
 import AuthButton from './AuthButton';
 import { useTactics } from '../hooks/useTactics';
-import { Pencil, Plus, Save, Share2, Lock, UserCheck, UserPlus, UserMinus, ChevronRight, CheckCircle2, Circle } from 'lucide-react';
+import { Pencil, Plus, Save, Share2, Lock, UserCheck, UserPlus, UserMinus, ChevronRight, CheckCircle2, Circle, ChevronUp, ChevronDown } from 'lucide-react';
 
 const DraggableListItem = ({ player, isSelected, isReadOnly, onClick, isDesktop, customColor, onToggleConfirm }) => {
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -120,6 +120,7 @@ const Board = () => {
     const [selectedPlayerId, setSelectedPlayerId] = useState(null);
     const [showAddForm, setShowAddForm] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
     const isDesktop = useMediaQuery('(min-width: 768px)');
     const orientation = isDesktop ? 'horizontal' : 'vertical';
@@ -463,16 +464,25 @@ const Board = () => {
                         </div>
                     )}
 
-                    {!isDesktop && <div className="h-40 w-full flex-shrink-0" />}
+                    {!isDesktop && <div className={`transition-all duration-500 flex-shrink-0 ${isSidebarCollapsed ? 'h-20' : 'h-40'} w-full`} />}
                 </div>
 
                 <div className={`
-                    bg-slate-900/80 backdrop-blur-2xl border-l border-white/10 text-white shadow-2xl z-50
+                    bg-slate-900/90 backdrop-blur-3xl border-l border-white/10 text-white shadow-[0_-20px_50px_rgba(0,0,0,0.5)] z-50
+                    transition-all duration-500 ease-in-out
                     ${isDesktop
                         ? 'w-80 h-full p-6 flex flex-col'
-                        : 'fixed bottom-0 left-0 right-0 h-auto max-h-[50vh] rounded-t-[2.5rem] p-5 flex flex-col border-t border-white/10'
+                        : `fixed bottom-0 left-0 right-0 h-auto max-h-[60vh] rounded-t-[3rem] p-6 pb-8 flex flex-col border-t border-white/10 ${isSidebarCollapsed ? 'translate-y-[calc(100%-80px)]' : 'translate-y-0'}`
                     }
                 `}>
+                    {!isDesktop && (
+                        <div
+                            className="absolute top-0 left-0 right-0 h-10 flex items-center justify-center cursor-pointer"
+                            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+                        >
+                            <div className="w-12 h-1 bg-white/20 rounded-full group-hover:bg-white/40 transition-colors" />
+                        </div>
+                    )}
                     {error && (
                         <div className="bg-red-500/20 text-red-200 p-2 rounded-xl text-xs mb-3 border border-red-500/30">
                             {error}
@@ -485,7 +495,15 @@ const Board = () => {
                                 {isReadOnly ? 'Táctica Compartida' : 'Mi Equipo'} <span className="text-xs font-medium bg-blue-600 px-2.5 py-1 rounded-full ml-1 align-middle">{players.length}</span>
                             </h2>
                         ) : (
-                            <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{isReadOnly ? 'TÁCTICA COMPARTIDA' : 'PLANTILLA'}</div>
+                            <div
+                                className="flex items-center gap-2 cursor-pointer"
+                                onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+                            >
+                                <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                                    {isReadOnly ? 'TÁCTICA COMPARTIDA' : 'PLANTILLA'}
+                                </div>
+                                {isSidebarCollapsed ? <ChevronUp size={14} className="text-blue-500 animate-bounce" /> : <ChevronDown size={14} className="text-gray-600" />}
+                            </div>
                         )}
 
                         <div className="flex gap-2 items-center">
