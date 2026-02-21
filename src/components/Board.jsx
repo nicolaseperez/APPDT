@@ -21,7 +21,20 @@ const DraggableListItem = ({ player, isSelected, isReadOnly, onClick, isDesktop,
         opacity: 0.5,
     } : undefined;
 
-    const jerseyColor = (customColor || player.color || 'bg-blue-600').replace('bg-', 'fill-');
+    const colorMap = {
+        'bg-blue-600': '#2563eb',
+        'bg-red-600': '#dc2626',
+        'bg-emerald-600': '#059669',
+        'bg-yellow-500': '#eab308',
+        'bg-orange-500': '#f97316',
+        'bg-purple-600': '#9333ea',
+        'bg-pink-500': '#ec4899',
+        'bg-sky-400': '#38bdf8',
+        'bg-slate-100': '#f1f5f9',
+        'bg-slate-800': '#1e293b',
+    };
+
+    const fillColor = colorMap[customColor || player.color] || '#2563eb';
 
     return (
         <div
@@ -42,7 +55,8 @@ const DraggableListItem = ({ player, isSelected, isReadOnly, onClick, isDesktop,
                 <svg viewBox="0 0 100 100" className={`${isDesktop ? 'w-10 h-10' : 'w-12 h-12'} drop-shadow-md`}>
                     <path
                         d="M25 20 L40 10 L60 10 L75 20 L85 35 L75 45 L75 90 L25 90 L25 45 L15 35 Z"
-                        className={`${jerseyColor} transition-colors duration-500`}
+                        fill={fillColor}
+                        className="transition-colors duration-500"
                         stroke="rgba(255,255,255,0.4)"
                         strokeWidth="1"
                     />

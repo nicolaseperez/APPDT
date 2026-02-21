@@ -4,9 +4,22 @@ import { CSS } from '@dnd-kit/utilities';
 import { Lock, Unlock, X } from 'lucide-react';
 
 const JerseyIcon = ({ color, isDragging }) => {
-    // Basic mapping for tailwind colors if needed
-    // We use fill- instead of bg- for SVG paths if using Tailwind classes directly
-    const fillClass = color?.replace('bg-', 'fill-') || 'fill-blue-600';
+    // Basic mapping for tailwind colors to hex since we are using SVGs
+    // and dynamic fill classes might not be purged correctly or work with Tailwind 4
+    const colorMap = {
+        'bg-blue-600': '#2563eb',
+        'bg-red-600': '#dc2626',
+        'bg-emerald-600': '#059669',
+        'bg-yellow-500': '#eab308',
+        'bg-orange-500': '#f97316',
+        'bg-purple-600': '#9333ea',
+        'bg-pink-500': '#ec4899',
+        'bg-sky-400': '#38bdf8',
+        'bg-slate-100': '#f1f5f9',
+        'bg-slate-800': '#1e293b',
+    };
+
+    const fillColor = colorMap[color] || '#2563eb';
 
     return (
         <div className={`relative transition-all duration-300 ${isDragging ? 'scale-125' : 'group-hover:scale-110'}`}>
@@ -14,7 +27,8 @@ const JerseyIcon = ({ color, isDragging }) => {
                 {/* Jersey Body */}
                 <path
                     d="M25 20 L40 10 L60 10 L75 20 L85 35 L75 45 L75 90 L25 90 L25 45 L15 35 Z"
-                    className={`${fillClass} transition-colors duration-500`}
+                    fill={fillColor}
+                    className="transition-colors duration-500"
                     stroke="rgba(255,255,255,0.4)"
                     strokeWidth="1"
                 />
