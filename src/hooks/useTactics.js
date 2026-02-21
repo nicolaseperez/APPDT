@@ -28,7 +28,7 @@ export function useTactics(initialPlayers) {
                         imageUrl: p.imageUrl || null,
                         number: p.number || 0,
                         name: p.name || 'JUGADOR',
-                        positionType: p.positionType || 'MED',
+                        positionType: p.positionType || (p.name?.toUpperCase() === 'GK' ? 'ARQ' : 'MED'),
                         color: p.color || 'bg-blue-600',
                         onField: p.onField ?? true
                     }));
@@ -77,5 +77,5 @@ export function useTactics(initialPlayers) {
         }
     };
 
-    return { players, setPlayers, teamColor, setTeamColor, gkColor, setGkColor, saveTactics, user };
+    return { players, setPlayers, teamColor, setTeamColor, gkColor, setGkColor, saveTactics, user, isReadOnly: false, error: null };
 }

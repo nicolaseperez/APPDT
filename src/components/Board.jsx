@@ -108,7 +108,10 @@ const Board = () => {
     ];
 
     const getPlayerColor = (p) => {
-        return p.positionType === 'ARQ' ? gkColor : teamColor;
+        const pos = p.positionType?.toUpperCase();
+        const name = p.name?.toUpperCase();
+        const isArquero = pos === 'ARQ' || !pos || name === 'GK' || name?.includes('ARQUERO');
+        return isArquero ? gkColor : teamColor;
     };
 
     const sensors = useSensors(
