@@ -7,6 +7,8 @@ import { auth } from '../firebase';
 export function useTactics(initialPlayers) {
     const [user] = useAuthState(auth);
     const [players, setPlayers] = useState(initialPlayers);
+    const [teamColor, setTeamColor] = useState('bg-blue-600');
+    const [gkColor, setGkColor] = useState('bg-yellow-500');
     const [loadingConfig, setLoadingConfig] = useState(false);
 
     useEffect(() => {
@@ -20,7 +22,6 @@ export function useTactics(initialPlayers) {
             if (docSnap.exists()) {
                 const data = docSnap.data();
                 if (data.players) {
-                    // Sanar los datos al traerlos (asegurar campos por defecto)
                     const sanitized = data.players.map(p => ({
                         ...p,
                         locked: p.locked || false,
@@ -29,10 +30,12 @@ export function useTactics(initialPlayers) {
                         name: p.name || 'JUGADOR',
                         positionType: p.positionType || 'MED',
                         color: p.color || 'bg-blue-600',
-                        onField: p.onField ?? true // Default to true for existing players
+                        onField: p.onField ?? true
                     }));
                     setPlayers(sanitized);
                 }
+                if (data.teamColor) setTeamColor(data.teamColor);
+                if (data.gkColor) setGkColor(data.gkColor);
             }
         }, (err) => {
             console.error("Firestore Error:", err);
@@ -49,7 +52,6 @@ export function useTactics(initialPlayers) {
         }
 
         try {
-            // Limpiar datos antes de enviar a Firestore (reemplazar undefined por null)
             const cleanPlayers = currentPlayers.map(p => ({
                 id: p.id || `p${Date.now()}`,
                 name: p.name || '',
@@ -65,6 +67,8 @@ export function useTactics(initialPlayers) {
 
             await setDoc(doc(db, 'users', user.uid, 'tactics', 'current'), {
                 players: cleanPlayers,
+                teamColor,
+                gkColor,
                 updatedAt: new Date()
             });
         } catch (e) {
@@ -73,5 +77,5 @@ export function useTactics(initialPlayers) {
         }
     };
 
-    return { players, setPlayers, saveTactics, user };
+    return { players, setPlayers, teamColor, setTeamColor, gkColor, setGkColor, saveTactics, user };
 }

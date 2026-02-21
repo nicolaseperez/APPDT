@@ -8,7 +8,7 @@ import AuthButton from './AuthButton';
 import { useTactics } from '../hooks/useTactics';
 import { Pencil, Plus, Save, Share2, Lock } from 'lucide-react';
 
-const DraggableListItem = ({ player, isSelected, isReadOnly, onClick, isDesktop }) => {
+const DraggableListItem = ({ player, isSelected, isReadOnly, onClick, isDesktop, customColor }) => {
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
         id: `sidebar-${player.id}`,
         data: { ...player, fromSidebar: true },
@@ -20,6 +20,8 @@ const DraggableListItem = ({ player, isSelected, isReadOnly, onClick, isDesktop 
         zIndex: 100,
         opacity: 0.5,
     } : undefined;
+
+    const jerseyColor = (customColor || player.color || 'bg-blue-600').replace('bg-', 'fill-');
 
     return (
         <div
@@ -36,20 +38,15 @@ const DraggableListItem = ({ player, isSelected, isReadOnly, onClick, isDesktop 
                 ${isDragging ? 'invisible' : ''}
             `}
         >
-            <div className={`relative flex items-center justify-center`}>
+            <div className={`relative flex items-center justify-center shrink-0`}>
                 <svg viewBox="0 0 100 100" className={`${isDesktop ? 'w-10 h-10' : 'w-12 h-12'} drop-shadow-md`}>
                     <path
                         d="M25 20 L40 10 L60 10 L75 20 L85 35 L75 45 L75 90 L25 90 L25 45 L15 35 Z"
-                        className={`${player.color.replace('bg-', 'fill-')} transition-colors duration-500`}
+                        className={`${jerseyColor} transition-colors duration-500`}
                         stroke="rgba(255,255,255,0.4)"
                         strokeWidth="1"
                     />
                 </svg>
-                <div className="absolute inset-0 flex items-center justify-center pt-1">
-                    <span className="text-white font-black text-[10px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
-                        {player.number}
-                    </span>
-                </div>
             </div>
             <div className="flex-1 min-w-0" >
                 <p className={`font-bold text-sm text-white truncate max-w-full ${!isDesktop && 'text-[10px]'}`}>{player.name || '...'}</p>
@@ -73,7 +70,7 @@ const Board = () => {
         { id: 'p7', number: 7, name: 'FWD', x: 50, y: 20, color: 'bg-red-600', positionType: 'DEL', locked: false, onField: true },
     ];
 
-    const { players, setPlayers, saveTactics, user, isReadOnly, error } = useTactics(initialPlayers);
+    const { players, setPlayers, teamColor, setTeamColor, gkColor, setGkColor, saveTactics, user, isReadOnly, error } = useTactics(initialPlayers);
 
     const [activeId, setActiveId] = useState(null);
     const [selectedPlayerId, setSelectedPlayerId] = useState(null);
@@ -82,6 +79,23 @@ const Board = () => {
 
     const isDesktop = useMediaQuery('(min-width: 768px)');
     const orientation = isDesktop ? 'horizontal' : 'vertical';
+
+    const jerseyColors = [
+        { name: 'Azul', class: 'bg-blue-600' },
+        { name: 'Rojo', class: 'bg-red-600' },
+        { name: 'Verde', class: 'bg-emerald-600' },
+        { name: 'Amarillo', class: 'bg-yellow-500' },
+        { name: 'Naranja', class: 'bg-orange-500' },
+        { name: 'Morado', class: 'bg-purple-600' },
+        { name: 'Rosa', class: 'bg-pink-500' },
+        { name: 'Celeste', class: 'bg-sky-400' },
+        { name: 'Blanco', class: 'bg-slate-100' },
+        { name: 'Negro', class: 'bg-slate-800' },
+    ];
+
+    const getPlayerColor = (p) => {
+        return p.positionType === 'ARQ' ? gkColor : teamColor;
+    };
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -155,9 +169,8 @@ const Board = () => {
             id: `p${Date.now()}`,
             name: playerData.name || 'NUEVO',
             number: playerData.number || 0,
-            imageUrl: playerData.imageUrl || null,
+            imageUrl: null,
             positionType: playerData.positionType || 'MED',
-            color: playerData.color || 'bg-blue-600',
             x: 50,
             y: 95,
             locked: false,
@@ -281,10 +294,9 @@ const Board = () => {
                                             id={p.id}
                                             number={p.number}
                                             name={p.name}
-                                            color={p.color}
+                                            color={getPlayerColor(p)}
                                             position={visualPos}
                                             isOverlay={false}
-                                            imageUrl={p.imageUrl}
                                             locked={p.locked}
                                             onToggleLock={() => handleToggleLock(p.id)}
                                             onRemoveFromField={() => handleRemoveFromField(p.id)}
@@ -325,7 +337,7 @@ const Board = () => {
                     bg-slate-900/80 backdrop-blur-2xl border-l border-white/10 text-white shadow-2xl z-50
                     ${isDesktop
                         ? 'w-80 h-full p-6 flex flex-col'
-                        : 'fixed bottom-0 left-0 right-0 h-auto max-h-[38vh] rounded-t-[2.5rem] p-5 flex flex-col border-t border-white/10'
+                        : 'fixed bottom-0 left-0 right-0 h-auto max-h-[45vh] rounded-t-[2.5rem] p-5 flex flex-col border-t border-white/10'
                     }
                 `}>
                     {error && (
@@ -360,6 +372,36 @@ const Board = () => {
                         </div>
                     </div>
 
+                    {/* Color Selectors */}
+                    {!isReadOnly && (
+                        <div className="mb-6 space-y-4">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Color Jugadores</label>
+                                <div className="flex gap-1.5 overflow-x-auto pb-2 scrollbar-hide">
+                                    {jerseyColors.map((c) => (
+                                        <button
+                                            key={`team-${c.class}`}
+                                            onClick={() => setTeamColor(c.class)}
+                                            className={`w-6 h-6 rounded-full border-2 shrink-0 transition-all ${c.class} ${teamColor === c.class ? 'border-white scale-110' : 'border-transparent opacity-50'}`}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Color Arquero</label>
+                                <div className="flex gap-1.5 overflow-x-auto pb-2 scrollbar-hide">
+                                    {jerseyColors.map((c) => (
+                                        <button
+                                            key={`gk-${c.class}`}
+                                            onClick={() => setGkColor(c.class)}
+                                            className={`w-6 h-6 rounded-full border-2 shrink-0 transition-all ${c.class} ${gkColor === c.class ? 'border-white scale-110' : 'border-transparent opacity-50'}`}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     <div className={`flex-1 ${isDesktop ? 'overflow-y-auto space-y-6 pr-1' : 'overflow-x-auto flex gap-4 items-center pb-6 scrollbar-hide touch-pan-x'}`}>
                         {['ARQ', 'DEF', 'MED', 'DEL'].map(group => {
                             const groupPlayers = groupedPlayers[group];
@@ -376,6 +418,7 @@ const Board = () => {
                                                 isReadOnly={isReadOnly}
                                                 isDesktop={isDesktop}
                                                 onClick={() => !isReadOnly && setSelectedPlayerId(p.id)}
+                                                customColor={getPlayerColor(p)}
                                             />
                                         ))}
                                     </div>
@@ -390,7 +433,7 @@ const Board = () => {
                 {activeId ? (
                     (() => {
                         const p = players.find(p => p.id === (String(activeId).startsWith('sidebar-') ? activeId.replace('sidebar-', '') : activeId));
-                        return <Player id={activeId} number={p?.number} color={p?.color} isOverlay position={{ x: 0, y: 0 }} />;
+                        return <Player id={activeId} number={p?.number} color={p ? getPlayerColor(p) : 'bg-blue-600'} isOverlay position={{ x: 0, y: 0 }} />;
                     })()
                 ) : null}
             </DragOverlay>

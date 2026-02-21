@@ -3,7 +3,7 @@ import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { Lock, Unlock, X } from 'lucide-react';
 
-const JerseyIcon = ({ color, number, isDragging }) => {
+const JerseyIcon = ({ color, isDragging }) => {
     // Basic mapping for tailwind colors if needed
     // We use fill- instead of bg- for SVG paths if using Tailwind classes directly
     const fillClass = color?.replace('bg-', 'fill-') || 'fill-blue-600';
@@ -34,11 +34,6 @@ const JerseyIcon = ({ color, number, isDragging }) => {
                 <path d="M25 20 L40 10" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
                 <path d="M75 20 L60 10" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
             </svg>
-            <div className="absolute inset-0 flex items-center justify-center pt-2">
-                <span className="text-white font-black text-xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] select-none">
-                    {number}
-                </span>
-            </div>
         </div>
     );
 };
@@ -64,7 +59,7 @@ const Player = ({ id, number, name, position, color = 'bg-blue-600', isOverlay, 
     return (
         <div ref={setNodeRef} style={style} {...listeners} {...attributes} className="flex flex-col items-center group cursor-grab active:cursor-grabbing">
             {/* Player Jersey */}
-            <JerseyIcon color={color} number={number} isDragging={isDragging} />
+            <JerseyIcon color={color} isDragging={isDragging} />
 
             {/* Lock Button (Right Side) */}
             {!isOverlay && onToggleLock && (
