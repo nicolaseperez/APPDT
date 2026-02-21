@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { DndContext, useSensor, useSensors, PointerSensor, DragOverlay, useDraggable } from '@dnd-kit/core';
+import { DndContext, useSensor, useSensors, PointerSensor, TouchSensor, DragOverlay, useDraggable } from '@dnd-kit/core';
 import Field from './Field';
 import Player from './Player';
 import { useMediaQuery } from '../hooks/useMediaQuery';
@@ -117,7 +117,13 @@ const Board = () => {
     const sensors = useSensors(
         useSensor(PointerSensor, {
             activationConstraint: {
-                distance: 5,
+                distance: 10,
+            },
+        }),
+        useSensor(TouchSensor, {
+            activationConstraint: {
+                delay: 200,
+                tolerance: 5,
             },
         })
     );
@@ -129,10 +135,19 @@ const Board = () => {
 
     const handleDragEnd = (event) => {
         if (isReadOnly) return;
-        const { active, delta, activatorEvent } = event;
+        const { active, over, delta, activatorEvent } = event;
         const id = active.id;
         const isFromSidebar = String(id).startsWith('sidebar-');
         const playerRealId = isFromSidebar ? id.replace('sidebar-', '') : id;
+
+        // Check if dropped over the field container
+        const overField = over && over.id === 'field';
+
+        // If from sidebar and not over field, don't do anything (snaps back)
+        if (isFromSidebar && !overField) {
+            setActiveId(null);
+            return;
+        }
 
         const field = document.getElementById('field-container');
         if (!field) return;
@@ -141,22 +156,34 @@ const Board = () => {
         let newX, newY;
 
         if (isFromSidebar) {
+            // Calculate visual coordinates relative to field container
             const pointerX = activatorEvent.clientX + delta.x;
             const pointerY = activatorEvent.clientY + delta.y;
 
-            newX = ((pointerX - rect.left) / rect.width) * 100;
-            newY = ((pointerY - rect.top) / rect.height) * 100;
+            const visualX = ((pointerX - rect.left) / rect.width) * 100;
+            const visualY = ((pointerY - rect.top) / rect.height) * 100;
 
-            if (newX < 0 || newX > 100 || newY < 0 || newY > 100) return;
-
+            if (orientation === 'horizontal') {
+                // In horizontal mode: x_visual = y_logical, y_visual = 100 - x_logical
+                newX = 100 - visualY;
+                newY = visualX;
+            } else {
+                newX = visualX;
+                newY = visualY;
+            }
         } else {
+            // Dragging existing player on field
             const deltaPercentX = (delta.x / rect.width) * 100;
             const deltaPercentY = (delta.y / rect.height) * 100;
 
             const player = players.find(p => p.id === playerRealId);
-            if (!player || player.locked) return;
+            if (!player || player.locked) {
+                setActiveId(null);
+                return;
+            }
 
             if (orientation === 'horizontal') {
+                // visual X delta changes logical Y, visual Y delta changes logical X (inverted)
                 newY = player.y + deltaPercentX;
                 newX = player.x - deltaPercentY;
             } else {
