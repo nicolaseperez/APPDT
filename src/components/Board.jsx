@@ -39,6 +39,9 @@ const DraggableListItem = ({ player, isSelected, isReadOnly, onClick, isDesktop,
     return (
         <div
             ref={setNodeRef}
+            {...listeners}
+            {...attributes}
+            onClick={onClick}
             style={style}
             className={`
                 group flex items-center gap-2 rounded-2xl border transition-all duration-300
@@ -50,10 +53,7 @@ const DraggableListItem = ({ player, isSelected, isReadOnly, onClick, isDesktop,
             `}
         >
             <div
-                {...listeners}
-                {...attributes}
-                onClick={onClick}
-                className="relative flex items-center justify-center shrink-0 cursor-grab active:cursor-grabbing"
+                className="relative flex items-center justify-center shrink-0"
             >
                 <svg viewBox="0 0 100 100" className={`${isDesktop ? 'w-8 h-8' : 'w-10 h-10'} drop-shadow-md`}>
                     <path
@@ -90,6 +90,7 @@ const DraggableListItem = ({ player, isSelected, isReadOnly, onClick, isDesktop,
                         e.stopPropagation();
                         onToggleConfirm(player.id);
                     }}
+                    onPointerDown={(e) => e.stopPropagation()}
                     className={`
                         p-1.5 rounded-lg transition-all active:scale-90
                         ${player.isConfirmed ? 'text-emerald-500 bg-emerald-500/10 hover:bg-emerald-500/20' : 'text-gray-500 bg-white/5 hover:bg-white/10 opacity-0 group-hover:opacity-100'}
@@ -153,8 +154,8 @@ const Board = () => {
         }),
         useSensor(TouchSensor, {
             activationConstraint: {
-                delay: 200,
-                tolerance: 5,
+                delay: 250,
+                tolerance: 15,
             },
         })
     );
@@ -192,9 +193,13 @@ const Board = () => {
         let newX, newY;
 
         if (isFromSidebar) {
-            // Calculate visual coordinates relative to field container
-            const pointerX = activatorEvent.clientX + delta.x;
-            const pointerY = activatorEvent.clientY + delta.y;
+            // Get pointer coordinates, handling both Mouse and Touch events
+            const touch = activatorEvent.touches?.[0] || activatorEvent.changedTouches?.[0];
+            const clientX = touch ? touch.clientX : activatorEvent.clientX;
+            const clientY = touch ? touch.clientY : activatorEvent.clientY;
+
+            const pointerX = clientX + delta.x;
+            const pointerY = clientY + delta.y;
 
             const visualX = ((pointerX - rect.left) / rect.width) * 100;
             const visualY = ((pointerY - rect.top) / rect.height) * 100;
