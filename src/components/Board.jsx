@@ -8,9 +8,9 @@ import AuthButton from './AuthButton';
 import { useTactics } from '../hooks/useTactics';
 import { Pencil, Plus, Save, Share2, Lock, UserCheck, UserPlus, UserMinus, ChevronRight, CheckCircle2, Circle, ChevronUp, ChevronDown } from 'lucide-react';
 
-const DraggableListItem = ({ player, isSelected, isReadOnly, onClick, isDesktop, customColor, onToggleConfirm }) => {
+const DraggableListItem = ({ player, isSelected, isReadOnly, onClick, isDesktop, customColor, onToggleConfirm, idPrefix = 'side' }) => {
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-        id: `sidebar-${player.id}`,
+        id: `${idPrefix}-${player.id}`,
         data: { ...player, fromSidebar: true },
         disabled: isReadOnly,
     });
@@ -169,8 +169,8 @@ const Board = () => {
         if (isReadOnly) return;
         const { active, over, delta, activatorEvent } = event;
         const id = active.id;
-        const isFromSidebar = String(id).startsWith('sidebar-');
-        const playerRealId = isFromSidebar ? id.replace('sidebar-', '') : id;
+        const isFromSidebar = String(id).startsWith('side-');
+        const playerRealId = isFromSidebar ? id.replace('side-conf-', '').replace('side-all-', '') : id;
 
         // Check if dropped over the field container
         const overField = over && over.id === 'field';
@@ -329,7 +329,7 @@ const Board = () => {
 
     const isFormOpen = !isReadOnly && (selectedPlayerId || showAddForm);
 
-    const renderPlayerList = (list, title, isMatchSquad = false) => {
+    const renderPlayerList = (list, title, isMatchSquad = false, idPrefix = 'side') => {
         const grouped = getGrouped(list);
         const hasPlayers = list.length > 0;
 
@@ -355,11 +355,12 @@ const Board = () => {
                                 <div className={`${isDesktop ? 'grid grid-cols-1 gap-2' : 'flex gap-2'}`}>
                                     {groupPlayers.map(p => (
                                         <DraggableListItem
-                                            key={p.id}
+                                            key={`${idPrefix}-${p.id}`}
                                             player={p}
                                             isSelected={selectedPlayerId === p.id}
                                             isReadOnly={isReadOnly}
                                             isDesktop={isDesktop}
+                                            idPrefix={idPrefix}
                                             onClick={() => !isReadOnly && setSelectedPlayerId(p.id)}
                                             customColor={getPlayerColor(p)}
                                             onToggleConfirm={handleToggleConfirm}
@@ -563,8 +564,8 @@ const Board = () => {
                     )}
 
                     <div className={`flex-1 overflow-y-auto pr-1 scrollbar-hide`}>
-                        {renderPlayerList(confirmedPlayers, isReadOnly ? "Suplentes" : "Convocados / Banco Real", true)}
-                        {!isReadOnly && renderPlayerList(fullSquadPlayers, "Plantilla Completa", false)}
+                        {renderPlayerList(confirmedPlayers, isReadOnly ? "Suplentes" : "Convocados / Banco Real", true, 'side-conf')}
+                        {!isReadOnly && renderPlayerList(fullSquadPlayers, "Plantilla Completa", false, 'side-all')}
                     </div>
                 </div>
             </div>
@@ -572,7 +573,11 @@ const Board = () => {
             <DragOverlay>
                 {activeId ? (
                     (() => {
-                        const p = players.find(p => p.id === (String(activeId).startsWith('sidebar-') ? activeId.replace('sidebar-', '') : activeId));
+                        const idStr = String(activeId);
+                        const playerRealId = idStr.startsWith('side-')
+                            ? idStr.replace('side-conf-', '').replace('side-all-', '')
+                            : idStr;
+                        const p = players.find(p => p.id === playerRealId);
                         return <Player id={activeId} number={p?.number} color={p ? getPlayerColor(p) : 'bg-blue-600'} isOverlay position={{ x: 0, y: 0 }} />;
                     })()
                 ) : null}
