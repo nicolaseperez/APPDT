@@ -1,16 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, Trash2, Upload, User, Hash, MapPin } from 'lucide-react';
-import { storage } from '../firebase';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { X, Save, Trash2, User, Hash, MapPin, Palette } from 'lucide-react';
 
 const PlayerForm = ({ selectedPlayer, onSave, onDelete, onCancel, onClose }) => {
     const [name, setName] = useState('');
     const [number, setNumber] = useState('');
     const [positionType, setPositionType] = useState('MED');
     const [color, setColor] = useState('bg-blue-600');
-    const [imageFile, setImageFile] = useState(null);
-    const [uploading, setUploading] = useState(false);
-    const [previewUrl, setPreviewUrl] = useState(null);
+
+    const jerseyColors = [
+        { name: 'Azul', class: 'bg-blue-600' },
+        { name: 'Rojo', class: 'bg-red-600' },
+        { name: 'Verde', class: 'bg-emerald-600' },
+        { name: 'Amarillo', class: 'bg-yellow-500' },
+        { name: 'Naranja', class: 'bg-orange-500' },
+        { name: 'Morado', class: 'bg-purple-600' },
+        { name: 'Rosa', class: 'bg-pink-500' },
+        { name: 'Celeste', class: 'bg-sky-400' },
+        { name: 'Blanco', class: 'bg-slate-100' },
+        { name: 'Negro', class: 'bg-slate-800' },
+    ];
 
     useEffect(() => {
         if (selectedPlayer) {
@@ -18,28 +26,29 @@ const PlayerForm = ({ selectedPlayer, onSave, onDelete, onCancel, onClose }) => 
             setNumber(selectedPlayer.number || '');
             setColor(selectedPlayer.color || 'bg-blue-600');
             setPositionType(selectedPlayer.positionType || 'MED');
-            setPreviewUrl(selectedPlayer.imageUrl || null);
         } else {
             setName('');
             setNumber('');
             setPositionType('MED');
             setColor('bg-blue-600');
-            setPreviewUrl(null);
         }
     }, [selectedPlayer]);
 
     const handlePositionChange = (type) => {
         setPositionType(type);
-        switch (type) {
-            case 'ARQ': setColor('bg-yellow-500'); break;
-            case 'DEF':
-            case 'LAT_IZQ':
-            case 'LAT_DER': setColor('bg-blue-600'); break;
-            case 'MED':
-            case 'VOL_IZQ':
-            case 'VOL_DER': setColor('bg-emerald-600'); break;
-            case 'DEL': setColor('bg-red-600'); break;
-            default: setColor('bg-blue-600');
+        // Sugerir color por defecto según posición si es un jugador nuevo
+        if (!selectedPlayer) {
+            switch (type) {
+                case 'ARQ': setColor('bg-yellow-500'); break;
+                case 'DEF':
+                case 'LAT_IZQ':
+                case 'LAT_DER': setColor('bg-blue-600'); break;
+                case 'MED':
+                case 'VOL_IZQ':
+                case 'VOL_DER': setColor('bg-emerald-600'); break;
+                case 'DEL': setColor('bg-red-600'); break;
+                default: setColor('bg-blue-600');
+            }
         }
     };
 
@@ -47,29 +56,8 @@ const PlayerForm = ({ selectedPlayer, onSave, onDelete, onCancel, onClose }) => 
         setName(val.toUpperCase()); // Forzar mayúsculas
     };
 
-    const handleImageChange = (e) => {
-        if (e.target.files[0]) {
-            setImageFile(e.target.files[0]);
-            setPreviewUrl(URL.createObjectURL(e.target.files[0]));
-        }
-    };
-
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setUploading(true);
-
-        let imageUrl = selectedPlayer?.imageUrl || null;
-
-        if (imageFile) {
-            try {
-                const storageRef = ref(storage, `player_images/${Date.now()}_${imageFile.name}`);
-                await uploadBytes(storageRef, imageFile);
-                imageUrl = await getDownloadURL(storageRef);
-            } catch (err) {
-                console.error("Upload failed", err);
-                alert("Error al subir imagen.");
-            }
-        }
 
         onSave({
             id: selectedPlayer ? selectedPlayer.id : undefined,
@@ -77,9 +65,8 @@ const PlayerForm = ({ selectedPlayer, onSave, onDelete, onCancel, onClose }) => 
             number: number ? parseInt(number) : 0,
             color,
             positionType,
-            imageUrl
+            imageUrl: null // Eliminamos imágenes
         });
-        setUploading(false);
     };
 
     const positionOptions = [
@@ -105,31 +92,31 @@ const PlayerForm = ({ selectedPlayer, onSave, onDelete, onCancel, onClose }) => 
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="flex flex-col items-center gap-2">
-                    <div className="relative group w-28 h-28">
-                        <input
-                            type="file"
-                            onChange={handleImageChange}
-                            accept="image/*"
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
-                        />
-                        <div className={`
-                            w-full h-full rounded-3xl border-2 border-dashed border-white/20 flex items-center justify-center overflow-hidden transition-all
-                            ${previewUrl ? 'border-solid border-blue-500' : 'bg-white/5 group-hover:bg-white/10'}
-                        `}>
-                            {previewUrl ? (
-                                <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
-                            ) : (
-                                <div className="text-center text-gray-500">
-                                    <Upload size={32} className="mx-auto mb-1 opacity-50" />
-                                    <span className="text-[10px] uppercase font-bold">Subir Foto</span>
-                                </div>
-                            )}
-                        </div>
-                        <div className="absolute -bottom-2 -right-2 bg-blue-600 p-1.5 rounded-xl shadow-lg border border-white/20 z-10">
-                            <Upload size={14} className="text-white" />
+                {/* Preview Jersey */}
+                <div className="flex flex-col items-center gap-4 py-4 bg-white/5 rounded-3xl border border-white/5 shadow-inner">
+                    <div className="relative group">
+                        <svg viewBox="0 0 100 100" className="w-24 h-24 drop-shadow-2xl">
+                            <path
+                                d="M25 20 L40 10 L60 10 L75 20 L85 35 L75 45 L75 90 L25 90 L25 45 L15 35 Z"
+                                className={`${color.replace('bg-', 'fill-')} transition-colors duration-500`}
+                                stroke="rgba(255,255,255,0.4)"
+                                strokeWidth="1"
+                            />
+                            <path
+                                d="M40 10 C45 15 55 15 60 10"
+                                fill="none"
+                                stroke="rgba(255,255,255,0.8)"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                            />
+                        </svg>
+                        <div className="absolute inset-0 flex items-center justify-center pt-2">
+                            <span className="text-white font-black text-2xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                                {number || '?'}
+                            </span>
                         </div>
                     </div>
+                    <span className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em]">Vista Previa</span>
                 </div>
 
                 <div className="space-y-4">
@@ -179,6 +166,27 @@ const PlayerForm = ({ selectedPlayer, onSave, onDelete, onCancel, onClose }) => 
                             </div>
                         </div>
                     </div>
+
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest ml-1 block flex items-center gap-2">
+                            <Palette size={12} /> Color de Remera
+                        </label>
+                        <div className="grid grid-cols-5 gap-2">
+                            {jerseyColors.map((c) => (
+                                <button
+                                    key={c.class}
+                                    type="button"
+                                    onClick={() => setColor(c.class)}
+                                    className={`
+                                        h-10 rounded-xl border-2 transition-all 
+                                        ${c.class} 
+                                        ${color === c.class ? 'border-white scale-110 shadow-lg' : 'border-transparent hover:scale-105 opacity-60 hover:opacity-100'}
+                                    `}
+                                    title={c.name}
+                                />
+                            ))}
+                        </div>
+                    </div>
                 </div>
 
                 <div className="flex gap-3 pt-4">
@@ -197,20 +205,10 @@ const PlayerForm = ({ selectedPlayer, onSave, onDelete, onCancel, onClose }) => 
                     )}
                     <button
                         type="submit"
-                        disabled={uploading}
-                        className="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-2xl flex justify-center items-center gap-2 transition-all font-bold shadow-xl shadow-blue-600/20 disabled:opacity-50 active:scale-95"
+                        className="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-2xl flex justify-center items-center gap-2 transition-all font-bold shadow-xl shadow-blue-600/20 active:scale-95"
                     >
-                        {uploading ? (
-                            <div className="flex items-center gap-2">
-                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                <span>SUBIENDO...</span>
-                            </div>
-                        ) : (
-                            <>
-                                <Save size={20} />
-                                <span className="uppercase">Guardar Jugador</span>
-                            </>
-                        )}
+                        <Save size={20} />
+                        <span className="uppercase">Guardar Jugador</span>
                     </button>
                 </div>
             </form>
@@ -219,3 +217,4 @@ const PlayerForm = ({ selectedPlayer, onSave, onDelete, onCancel, onClose }) => 
 };
 
 export default PlayerForm;
+

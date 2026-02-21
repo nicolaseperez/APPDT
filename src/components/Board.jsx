@@ -32,18 +32,24 @@ const DraggableListItem = ({ player, isSelected, isReadOnly, onClick, isDesktop 
                 flex items-center gap-3 rounded-2xl border transition-all duration-300
                 ${isSelected ? 'bg-blue-600/20 border-blue-500 scale-[1.02]' : 'bg-white/5 border-white/5 hover:bg-white/10'}
                 ${isReadOnly ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'}
-                ${isDesktop ? 'p-3' : 'flex-col p-3 w-16 justify-center text-center'}
+                ${isDesktop ? 'p-3' : 'flex-col p-3 w-20 justify-center text-center'}
                 ${isDragging ? 'invisible' : ''}
             `}
         >
-            <div className={`
-                rounded-2xl flex items-center justify-center text-xs font-black text-white border border-white/10 shadow-lg overflow-hidden
-                ${player.color} ${player.imageUrl ? 'bg-white' : ''}
-                ${isDesktop ? 'w-10 h-10' : 'w-12 h-12 shadow-xl'}
-            `}>
-                {player.imageUrl ? (
-                    <img src={player.imageUrl} alt={player.name} className="w-full h-full object-cover" />
-                ) : player.number}
+            <div className={`relative flex items-center justify-center`}>
+                <svg viewBox="0 0 100 100" className={`${isDesktop ? 'w-10 h-10' : 'w-12 h-12'} drop-shadow-md`}>
+                    <path
+                        d="M25 20 L40 10 L60 10 L75 20 L85 35 L75 45 L75 90 L25 90 L25 45 L15 35 Z"
+                        className={`${player.color.replace('bg-', 'fill-')} transition-colors duration-500`}
+                        stroke="rgba(255,255,255,0.4)"
+                        strokeWidth="1"
+                    />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center pt-1">
+                    <span className="text-white font-black text-[10px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+                        {player.number}
+                    </span>
+                </div>
             </div>
             <div className="flex-1 min-w-0" >
                 <p className={`font-bold text-sm text-white truncate max-w-full ${!isDesktop && 'text-[10px]'}`}>{player.name || '...'}</p>
@@ -384,7 +390,7 @@ const Board = () => {
                 {activeId ? (
                     (() => {
                         const p = players.find(p => p.id === (String(activeId).startsWith('sidebar-') ? activeId.replace('sidebar-', '') : activeId));
-                        return <Player id={activeId} number={p?.number} imageUrl={p?.imageUrl} isOverlay />;
+                        return <Player id={activeId} number={p?.number} color={p?.color} isOverlay position={{ x: 0, y: 0 }} />;
                     })()
                 ) : null}
             </DragOverlay>
