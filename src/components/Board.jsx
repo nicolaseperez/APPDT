@@ -47,15 +47,16 @@ const DraggableListItem = ({ player, isSelected, isReadOnly, onClick, isDesktop,
                 group flex items-center gap-2 rounded-2xl border transition-all duration-300
                 ${isSelected ? 'bg-blue-600/20 border-blue-500 scale-[1.02]' : 'bg-white/5 border-white/5 hover:bg-white/10'}
                 ${isReadOnly ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'}
-                ${isDesktop ? 'p-2' : 'flex-col p-2 w-20 justify-center text-center'}
-                ${isDragging ? 'invisible' : ''}
+                ${isDesktop ? 'p-3' : 'flex-col p-2 w-24 justify-center text-center'}
+                ${isDragging ? 'opacity-20' : ''}
                 ${player.isConfirmed ? 'opacity-100' : 'opacity-60'}
+                touch-none
             `}
         >
             <div
                 className="relative flex items-center justify-center shrink-0"
             >
-                <svg viewBox="0 0 100 100" className={`${isDesktop ? 'w-8 h-8' : 'w-10 h-10'} drop-shadow-md`}>
+                <svg viewBox="0 0 100 100" className={`${isDesktop ? 'w-12 h-12' : 'w-14 h-14'} drop-shadow-md`}>
                     <path
                         d="M25 20 L40 10 L60 10 L75 20 L85 35 L75 45 L75 90 L25 90 L25 45 L15 35 Z"
                         fill={fillColor}
@@ -193,10 +194,11 @@ const Board = () => {
         let newX, newY;
 
         if (isFromSidebar) {
-            // Get pointer coordinates, handling both Mouse and Touch events
-            const touch = activatorEvent.touches?.[0] || activatorEvent.changedTouches?.[0];
-            const clientX = touch ? touch.clientX : activatorEvent.clientX;
-            const clientY = touch ? touch.clientY : activatorEvent.clientY;
+            // Get pointer coordinates, dnd-kit activatorEvent can be Mouse or Touch
+            // We use the initial coordinates and add the current delta
+            const activator = activatorEvent.touches ? activatorEvent.touches[0] : (activatorEvent.changedTouches ? activatorEvent.changedTouches[0] : activatorEvent);
+            const clientX = activator.clientX;
+            const clientY = activator.clientY;
 
             const pointerX = clientX + delta.x;
             const pointerY = clientY + delta.y;
@@ -205,8 +207,11 @@ const Board = () => {
             const visualY = ((pointerY - rect.top) / rect.height) * 100;
 
             if (orientation === 'horizontal') {
-                newX = 100 - visualY;
-                newY = visualX;
+                // Correct Inverse Landscape Transform:
+                // Base X = visualY
+                // Base Y = 100 - visualX
+                newX = visualY;
+                newY = 100 - visualX;
             } else {
                 newX = visualX;
                 newY = visualY;
@@ -412,8 +417,8 @@ const Board = () => {
                     <div
                         id="field-container"
                         className={`
-                            relative transition-all duration-700 shadow-[0_0_50px_rgba(0,0,0,0.5)] rounded-xl overflow-hidden
-                            ${isDesktop ? 'w-full max-w-4xl aspect-[4/3]' : 'w-full max-w-sm aspect-[3/5]'} 
+                            relative transition-all duration-700 shadow-[0_0_50px_rgba(0,0,0,0.5)] rounded-xl overflow-hidden touch-none
+                            ${isDesktop ? 'w-full max-w-4xl aspect-[16/10]' : 'w-full max-w-sm aspect-[3/5]'} 
                         `}
                         onClick={() => setSelectedPlayerId(null)}
                     >
