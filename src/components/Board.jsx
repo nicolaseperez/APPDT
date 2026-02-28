@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { DndContext, useSensor, useSensors, PointerSensor, TouchSensor, DragOverlay, useDraggable } from '@dnd-kit/core';
+import { DndContext, useSensor, useSensors, MouseSensor, TouchSensor, DragOverlay, useDraggable } from '@dnd-kit/core';
 import Field from './Field';
 import Player from './Player';
 import { useMediaQuery } from '../hooks/useMediaQuery';
@@ -50,7 +50,6 @@ const DraggableListItem = ({ player, isSelected, isReadOnly, onClick, isDesktop,
                 ${isDesktop ? 'p-3' : 'flex-col p-1.5 w-20 justify-center text-center'}
                 ${isDragging ? 'opacity-0' : 'opacity-100'}
                 ${player.isConfirmed ? 'opacity-100' : 'opacity-60'}
-                touch-none
             `}
         >
             <div
@@ -166,9 +165,15 @@ const Board = () => {
     };
 
     const sensors = useSensors(
-        useSensor(PointerSensor, {
+        useSensor(MouseSensor, {
             activationConstraint: {
                 distance: 5,
+            },
+        }),
+        useSensor(TouchSensor, {
+            activationConstraint: {
+                delay: 300,
+                tolerance: 5,
             },
         })
     );
