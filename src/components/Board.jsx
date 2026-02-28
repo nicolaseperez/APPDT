@@ -6,7 +6,7 @@ import { useMediaQuery } from '../hooks/useMediaQuery';
 import PlayerForm from './PlayerForm';
 import AuthButton from './AuthButton';
 import { useTactics } from '../hooks/useTactics';
-import { Pencil, Plus, Save, Share2, Lock, UserCheck, UserPlus, UserMinus, ChevronRight, CheckCircle2, Circle, ChevronUp, ChevronDown } from 'lucide-react';
+import { Pencil, Plus, Minus, Save, Share2, Lock, UserCheck, UserPlus, UserMinus, ChevronRight, CheckCircle2, Circle, ChevronUp, ChevronDown } from 'lucide-react';
 
 const DraggableListItem = ({ player, isSelected, isReadOnly, onClick, isDesktop, customColor, onToggleConfirm, idPrefix = 'side' }) => {
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -94,11 +94,11 @@ const DraggableListItem = ({ player, isSelected, isReadOnly, onClick, isDesktop,
                     onPointerDown={(e) => e.stopPropagation()}
                     className={`
                         p-1.5 rounded-lg transition-all active:scale-90
-                        ${player.isConfirmed ? 'text-emerald-500 bg-emerald-500/10 hover:bg-emerald-500/20' : 'text-gray-500 bg-white/5 hover:bg-white/10 opacity-0 group-hover:opacity-100'}
+                        ${player.isConfirmed ? 'text-red-400 bg-red-400/10 hover:bg-red-400/20' : 'text-emerald-400 bg-emerald-400/10 hover:bg-emerald-400/20'}
                     `}
-                    title={player.isConfirmed ? "Quitar de convocados" : "Confirmar convocatoria"}
+                    title={player.isConfirmed ? "Quitar de convocados" : "Agregar a convocados"}
                 >
-                    {player.isConfirmed ? <UserMinus size={14} /> : <UserPlus size={14} />}
+                    {player.isConfirmed ? <Minus size={16} /> : <Plus size={16} />}
                 </button>
             )}
         </div>
@@ -321,7 +321,7 @@ const Board = () => {
     });
 
     const confirmedPlayers = players.filter(p => p.isConfirmed && !p.onField);
-    const fullSquadPlayers = players;
+    const generalPlayers = players.filter(p => !p.isConfirmed);
 
     const groupLabels = {
         'ARQ': 'Arqueros', 'DEF': 'Defensores', 'MED': 'Medios', 'DEL': 'Delanteros'
@@ -564,8 +564,8 @@ const Board = () => {
                     )}
 
                     <div className={`flex-1 overflow-y-auto pr-1 scrollbar-hide`}>
-                        {renderPlayerList(confirmedPlayers, isReadOnly ? "Suplentes" : "Convocados / Banco Real", true, 'side-conf')}
-                        {!isReadOnly && renderPlayerList(fullSquadPlayers, "Plantilla Completa", false, 'side-all')}
+                        {renderPlayerList(confirmedPlayers, isReadOnly ? "Suplentes" : "Lista de Convocados", true, 'side-conf')}
+                        {!isReadOnly && renderPlayerList(generalPlayers, "Lista General", false, 'side-all')}
                     </div>
                 </div>
             </div>
