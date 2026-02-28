@@ -409,7 +409,7 @@ const Board = () => {
                 {isFormOpen && (
                     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
                         <div
-                            className="absolute inset-0 bg-slate-950/60 backdrop-blur-md animate-in fade-in duration-300"
+                            className="absolute inset-0 bg-slate-950/80 md:bg-slate-950/60 md:backdrop-blur-md animate-in fade-in duration-200"
                             onClick={() => { setSelectedPlayerId(null); setShowAddForm(false); }}
                         />
                         <div className="relative z-10 w-full flex justify-center overflow-hidden">
@@ -435,7 +435,7 @@ const Board = () => {
                     <div
                         id="field-container"
                         className={`
-                            relative transition-all duration-700 shadow-[0_0_50px_rgba(0,0,0,0.5)] rounded-xl overflow-hidden touch-none
+                            relative transition-all duration-500 md:duration-700 shadow-2xl md:shadow-[0_0_50px_rgba(0,0,0,0.5)] rounded-xl overflow-hidden touch-none
                             ${isDesktop ? 'w-full max-w-4xl aspect-[4/3]' : 'w-full max-w-sm aspect-[3/5]'} 
                         `}
                         onClick={() => setSelectedPlayerId(null)}
@@ -498,8 +498,8 @@ const Board = () => {
                 </div>
 
                 <div className={`
-                    bg-slate-900/90 backdrop-blur-3xl border-l border-white/10 text-white shadow-[0_-20px_50px_rgba(0,0,0,0.5)] z-50
-                    transition-all duration-500 ease-in-out
+                    bg-slate-900/95 md:bg-slate-900/90 md:backdrop-blur-3xl border-l border-white/10 text-white shadow-2xl z-50
+                    transition-all duration-300 md:duration-500 ease-in-out
                     ${isDesktop
                         ? 'w-80 h-full p-6 flex flex-col'
                         : `fixed bottom-0 left-0 right-0 h-auto max-h-[60vh] rounded-t-[3rem] p-6 pb-8 flex flex-col border-t border-white/10 ${isSidebarCollapsed ? 'translate-y-[calc(100%-80px)]' : 'translate-y-0'}`

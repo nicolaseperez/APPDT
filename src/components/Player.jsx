@@ -23,7 +23,7 @@ const JerseyIcon = ({ color, isDragging }) => {
 
     return (
         <div className={`relative transition-all duration-300 ${isDragging ? 'scale-125' : 'group-hover:scale-110'}`}>
-            <svg viewBox="0 0 100 100" className="w-16 h-16 drop-shadow-2xl">
+            <svg viewBox="0 0 100 100" className="w-[3.25rem] h-[3.25rem] md:w-16 md:h-16 drop-shadow-md md:drop-shadow-2xl">
                 {/* Jersey Body */}
                 <path
                     d="M25 20 L40 10 L60 10 L75 20 L85 35 L75 45 L75 90 L25 90 L25 45 L15 35 Z"
@@ -111,9 +111,9 @@ const Player = ({ id, number, name, position, color = 'bg-blue-600', isOverlay, 
             {/* Name Label */}
             {!isOverlay && (
                 <div className={`
-                    mt-1 px-3 py-0.5 bg-black/80 backdrop-blur-md rounded-lg border border-white/10
-                    text-[10px] font-black text-white uppercase tracking-tighter text-center whitespace-nowrap
-                    transition-opacity duration-200 shadow-xl
+                    mt-1 px-2.5 py-0.5 md:px-3 md:py-0.5 bg-black/80 backdrop-blur-sm md:backdrop-blur-md rounded-lg border border-white/10
+                    text-[8px] md:text-[10px] font-black text-white uppercase tracking-tighter text-center whitespace-nowrap
+                    transition-opacity duration-200 shadow-md md:shadow-xl
                     ${isDragging ? 'opacity-0' : 'opacity-100'}
                 `}>
                     {name}
