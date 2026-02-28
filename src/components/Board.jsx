@@ -479,11 +479,13 @@ const Board = () => {
                             })}
                         </Field>
 
-                        <div
-                            className={`absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-slate-900/80 to-transparent border-t border-white/10 pointer-events-none flex items-center justify-center`}
-                        >
-                            <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em]">Banco de Suplentes</span>
-                        </div>
+                        {isDesktop && (
+                            <div
+                                className={`absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-slate-900/80 to-transparent border-t border-white/10 pointer-events-none flex items-center justify-center`}
+                            >
+                                <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em]">Banco de Suplentes</span>
+                            </div>
+                        )}
                     </div>
 
                     {isDesktop && (
@@ -505,12 +507,12 @@ const Board = () => {
                 `}>
                     {!isDesktop && (
                         <div
-                            className="absolute top-0 left-0 right-0 h-10 flex items-center justify-center cursor-pointer select-none"
+                            className="absolute -top-6 left-0 right-0 h-16 pt-8 flex justify-center cursor-pointer select-none touch-none z-50"
                             onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
                             onTouchStart={handleTouchStart}
                             onTouchEnd={handleTouchEnd}
                         >
-                            <div className="w-12 h-1.5 bg-white/20 rounded-full group-hover:bg-white/40 transition-colors" />
+                            <div className="w-16 h-2 bg-white/20 rounded-full group-hover:bg-white/40 transition-colors" />
                         </div>
                     )}
                     {error && (
