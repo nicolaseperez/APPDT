@@ -172,7 +172,7 @@ const Board = () => {
         }),
         useSensor(TouchSensor, {
             activationConstraint: {
-                delay: 300,
+                delay: 600,
                 tolerance: 5,
             },
         })
@@ -257,18 +257,53 @@ const Board = () => {
             return;
         }
 
-        setPlayers((prev) => prev.map(p => {
-            if (p.id === playerRealId) {
-                return {
-                    ...p,
-                    x: Number(Math.min(100, Math.max(0, newX)).toFixed(2)),
-                    y: Number(Math.min(100, Math.max(0, newY)).toFixed(2)),
-                    onField: true,
-                    isConfirmed: true
-                };
+        setPlayers((prev) => {
+            const finalX = Number(Math.min(100, Math.max(0, newX)).toFixed(2));
+            const finalY = Number(Math.min(100, Math.max(0, newY)).toFixed(2));
+
+            let swapTargetId = null;
+            if (isFromSidebar) {
+                let minDist = Infinity;
+                prev.forEach(p => {
+                    if (p.onField && !p.locked && p.id !== playerRealId) {
+                        // Check distance
+                        const dist = Math.sqrt(Math.pow(p.x - finalX, 2) + Math.pow(p.y - finalY, 2));
+                        if (dist < 8 && dist < minDist) { // 8% threshold for substitution
+                            minDist = dist;
+                            swapTargetId = p.id;
+                        }
+                    }
+                });
             }
-            return p;
-        }));
+
+            return prev.map(p => {
+                // Return replaced player to the exact same sidebar state
+                if (swapTargetId && p.id === swapTargetId) {
+                    return { ...p, onField: false, locked: false };
+                }
+                // Set the dropped player
+                if (p.id === playerRealId) {
+                    if (swapTargetId) {
+                        const target = prev.find(t => t.id === swapTargetId);
+                        return {
+                            ...p,
+                            x: target.x,
+                            y: target.y,
+                            onField: true,
+                            isConfirmed: true
+                        };
+                    }
+                    return {
+                        ...p,
+                        x: finalX,
+                        y: finalY,
+                        onField: true,
+                        isConfirmed: true
+                    };
+                }
+                return p;
+            });
+        });
 
         setActiveId(null);
     };
