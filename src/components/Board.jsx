@@ -47,7 +47,7 @@ const DraggableListItem = ({ player, isSelected, isReadOnly, onClick, isDesktop,
                 group flex items-center gap-2 rounded-2xl border transition-all duration-300
                 ${isSelected ? 'bg-blue-600/20 border-blue-500 scale-[1.02]' : 'bg-white/5 border-white/5 hover:bg-white/10'}
                 ${isReadOnly ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'}
-                ${isDesktop ? 'p-3' : 'flex-col p-2 w-24 justify-center text-center'}
+                ${isDesktop ? 'p-3' : 'flex-col p-1.5 w-20 justify-center text-center'}
                 ${isDragging ? 'opacity-0' : 'opacity-100'}
                 ${player.isConfirmed ? 'opacity-100' : 'opacity-60'}
                 touch-none
@@ -56,7 +56,7 @@ const DraggableListItem = ({ player, isSelected, isReadOnly, onClick, isDesktop,
             <div
                 className="relative flex items-center justify-center shrink-0"
             >
-                <svg viewBox="0 0 100 100" className={`${isDesktop ? 'w-12 h-12' : 'w-14 h-14'} drop-shadow-md`}>
+                <svg viewBox="0 0 100 100" className={`${isDesktop ? 'w-12 h-12' : 'w-12 h-12'} drop-shadow-md`}>
                     <path
                         d="M25 20 L40 10 L60 10 L75 20 L85 35 L75 45 L75 90 L25 90 L25 45 L15 35 Z"
                         fill={fillColor}
@@ -73,7 +73,7 @@ const DraggableListItem = ({ player, isSelected, isReadOnly, onClick, isDesktop,
             </div>
 
             <div className="flex-1 min-w-0 pointer-events-none" >
-                <p className={`font-bold text-xs text-white truncate max-w-full ${!isDesktop && 'text-[9px]'}`}>{player.name || '...'}</p>
+                <p className={`font-bold text-xs text-white truncate max-w-full ${!isDesktop && '!text-[8px]'}`}>{player.name || '...'}</p>
                 {isDesktop ? (
                     <p className="text-[8px] font-bold text-gray-500 uppercase tracking-widest truncate">
                         {player.positionType?.replace('LAT_', 'L').replace('VOL_', 'V')}
@@ -123,6 +123,24 @@ const Board = () => {
     const [showAddForm, setShowAddForm] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+    const [touchStartY, setTouchStartY] = useState(null);
+
+    const handleTouchStart = (e) => {
+        setTouchStartY(e.touches[0].clientY);
+    };
+
+    const handleTouchEnd = (e) => {
+        if (touchStartY === null) return;
+        const touchEndY = e.changedTouches[0].clientY;
+        const deltaY = touchEndY - touchStartY;
+
+        if (deltaY > 30) {
+            setIsSidebarCollapsed(true);
+        } else if (deltaY < -30) {
+            setIsSidebarCollapsed(false);
+        }
+        setTouchStartY(null);
+    };
 
     const isDesktop = useMediaQuery('(min-width: 768px)');
     const orientation = isDesktop ? 'horizontal' : 'vertical';
@@ -487,10 +505,12 @@ const Board = () => {
                 `}>
                     {!isDesktop && (
                         <div
-                            className="absolute top-0 left-0 right-0 h-10 flex items-center justify-center cursor-pointer"
+                            className="absolute top-0 left-0 right-0 h-10 flex items-center justify-center cursor-pointer select-none"
                             onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+                            onTouchStart={handleTouchStart}
+                            onTouchEnd={handleTouchEnd}
                         >
-                            <div className="w-12 h-1 bg-white/20 rounded-full group-hover:bg-white/40 transition-colors" />
+                            <div className="w-12 h-1.5 bg-white/20 rounded-full group-hover:bg-white/40 transition-colors" />
                         </div>
                     )}
                     {error && (
