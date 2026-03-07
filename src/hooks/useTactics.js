@@ -51,7 +51,7 @@ export function useTactics(initialPlayers) {
         });
 
         return () => unsubscribe();
-    }, [targetUid, user]); // Added user to dependencies to re-run if user changes and targetUid might change
+    }, [targetUid]);
 
     const saveTactics = async (currentPlayers) => {
         if (isReadOnly) return;
@@ -87,5 +87,5 @@ export function useTactics(initialPlayers) {
         }
     };
 
-    return { players, setPlayers, teamColor, setTeamColor, gkColor, setGkColor, saveTactics, user, isReadOnly: false, error: null };
+    return { players, setPlayers, teamColor, setTeamColor, gkColor, setGkColor, saveTactics, user, isReadOnly, loadingConfig, error: null };
 }
