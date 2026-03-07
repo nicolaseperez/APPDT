@@ -5,7 +5,7 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '../firebase';
 
 export function useTactics(initialPlayers) {
-    const [user] = useAuthState(auth);
+    const [user, authLoading] = useAuthState(auth);
     const searchParams = new URLSearchParams(window.location.search);
     const sharedUid = searchParams.get('uid');
 
@@ -17,11 +17,15 @@ export function useTactics(initialPlayers) {
     const [teamColor, setTeamColor] = useState('bg-blue-600');
     const [gkColor, setGkColor] = useState('bg-yellow-500');
     const [loadingConfig, setLoadingConfig] = useState(false);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
+        // Esperar a que Firebase Auth termine de resolver
+        if (authLoading) return;
         if (!targetUid) return;
 
         setLoadingConfig(true);
+        setError(null);
         const docRef = doc(db, 'users', targetUid, 'tactics', 'current');
 
         const unsubscribe = onSnapshot(docRef, (docSnap) => {
@@ -47,11 +51,12 @@ export function useTactics(initialPlayers) {
             }
         }, (err) => {
             console.error("Firestore Error:", err);
+            setError(err.message);
             setLoadingConfig(false);
         });
 
         return () => unsubscribe();
-    }, [targetUid]);
+    }, [targetUid, authLoading]);
 
     const saveTactics = async (currentPlayers) => {
         if (isReadOnly) return;
@@ -87,5 +92,5 @@ export function useTactics(initialPlayers) {
         }
     };
 
-    return { players, setPlayers, teamColor, setTeamColor, gkColor, setGkColor, saveTactics, user, isReadOnly, loadingConfig, error: null };
+    return { players, setPlayers, teamColor, setTeamColor, gkColor, setGkColor, saveTactics, user, isReadOnly, loadingConfig, error };
 }
