@@ -24,7 +24,7 @@ const ShieldIcon = ({ color, isDragging, number }) => {
 
     return (
         <div className={`relative transition-all duration-300 flex items-center justify-center ${isDragging ? 'scale-125 z-50' : 'group-hover:scale-110'}`}>
-            <svg viewBox="0 0 100 100" className="w-[3.5rem] h-[3.5rem] md:w-[4.5rem] md:h-[4.5rem]" style={{ filter: glowFilter }}>
+            <svg viewBox="0 0 100 100" className="w-[3rem] h-[3rem] md:w-[3.8rem] md:h-[3.8rem]" style={{ filter: glowFilter }}>
                 <defs>
                     <linearGradient id={`grad-${color}`} x1="0%" y1="0%" x2="0%" y2="100%">
                         <stop offset="0%" style={{stopColor: outlineColor, stopOpacity: 0.3}} />

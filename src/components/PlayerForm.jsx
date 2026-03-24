@@ -3,14 +3,17 @@ import { X, Save, Trash2, User, Hash, MapPin, Palette } from 'lucide-react';
 
 const PlayerForm = ({ selectedPlayer, onSave, onDelete, onCancel, onClose }) => {
     const [name, setName] = useState('');
+    const [number, setNumber] = useState('');
     const [positionType, setPositionType] = useState('MED');
 
     useEffect(() => {
         if (selectedPlayer) {
             setName(selectedPlayer.name);
+            setNumber(selectedPlayer.number || '');
             setPositionType(selectedPlayer.positionType || 'MED');
         } else {
             setName('');
+            setNumber('');
             setPositionType('MED');
         }
     }, [selectedPlayer]);
@@ -29,7 +32,7 @@ const PlayerForm = ({ selectedPlayer, onSave, onDelete, onCancel, onClose }) => 
         onSave({
             id: selectedPlayer ? selectedPlayer.id : undefined,
             name: name.trim(),
-            number: 0, // No longer used
+            number: number || '',
             positionType,
         });
     };
@@ -58,18 +61,36 @@ const PlayerForm = ({ selectedPlayer, onSave, onDelete, onCancel, onClose }) => 
 
             <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-4">
-                    <div className="relative">
-                        <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest ml-1 mb-1 block">Nombre Completo</label>
-                        <div className="relative">
-                            <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                            <input
-                                type="text"
-                                value={name}
-                                onChange={(e) => handleNameChange(e.target.value)}
-                                className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 pl-10 pr-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-medium uppercase"
-                                placeholder="EJ: LIONEL MESSI"
-                                required
-                            />
+                    <div className="flex gap-4">
+                        <div className="relative flex-1">
+                            <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest ml-1 mb-1 block">Nombre Completo</label>
+                            <div className="relative">
+                                <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                <input
+                                    type="text"
+                                    value={name}
+                                    onChange={(e) => handleNameChange(e.target.value)}
+                                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 pl-10 pr-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-medium uppercase"
+                                    placeholder="EJ: L. MESSI"
+                                    required
+                                />
+                            </div>
+                        </div>
+
+                        <div className="relative w-24">
+                            <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest ml-1 mb-1 block">Dorsal</label>
+                            <div className="relative">
+                                <Hash size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                <input
+                                    type="number"
+                                    value={number}
+                                    onChange={(e) => setNumber(e.target.value)}
+                                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 pl-9 pr-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-medium text-center"
+                                    placeholder="#"
+                                    min="1"
+                                    max="99"
+                                />
+                            </div>
                         </div>
                     </div>
 

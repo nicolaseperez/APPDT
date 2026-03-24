@@ -56,7 +56,7 @@ const DraggableListItem = ({ player, isSelected, isReadOnly, onClick, isDesktop,
             <div
                 className="relative flex items-center justify-center shrink-0"
             >
-                <svg viewBox="0 0 100 100" className={`${isDesktop ? 'w-10 h-10' : 'w-10 h-10'}`} style={{ filter: glowFilter }}>
+                <svg viewBox="0 0 100 100" className={`${isDesktop ? 'w-8 h-8' : 'w-8 h-8'}`} style={{ filter: glowFilter }}>
                     <defs>
                         <linearGradient id={`grad-side-${player.id}`} x1="0%" y1="0%" x2="0%" y2="100%">
                             <stop offset="0%" style={{stopColor: outlineColor, stopOpacity: 0.3}} />
