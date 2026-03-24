@@ -3,50 +3,60 @@ import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { Lock, Unlock, X } from 'lucide-react';
 
-const JerseyIcon = ({ color, isDragging }) => {
+const ShieldIcon = ({ color, isDragging, number }) => {
     // Basic mapping for tailwind colors to hex since we are using SVGs
-    // and dynamic fill classes might not be purged correctly or work with Tailwind 4
+    // Mapped to brighter/neon equivalents
     const colorMap = {
-        'bg-blue-600': '#2563eb',
-        'bg-red-600': '#dc2626',
-        'bg-emerald-600': '#059669',
-        'bg-yellow-500': '#eab308',
-        'bg-orange-500': '#f97316',
-        'bg-purple-600': '#9333ea',
-        'bg-pink-500': '#ec4899',
-        'bg-sky-400': '#38bdf8',
-        'bg-slate-100': '#f1f5f9',
-        'bg-slate-800': '#1e293b',
+        'bg-blue-600': '#06b6d4', // cyan-500
+        'bg-red-600': '#f43f5e', // rose-500
+        'bg-emerald-600': '#10b981', // emerald-500
+        'bg-yellow-500': '#fbbf24', // amber-400
+        'bg-orange-500': '#fb923c', // orange-400
+        'bg-purple-600': '#a855f7', // purple-500
+        'bg-pink-500': '#f472b6', // pink-400
+        'bg-sky-400': '#38bdf8', // sky-400
+        'bg-slate-100': '#f8fafc',
+        'bg-slate-800': '#94a3b8',
     };
 
-    const fillColor = colorMap[color] || '#2563eb';
+    const outlineColor = colorMap[color] || '#06b6d4';
+    const glowFilter = `drop-shadow(0 0 5px ${outlineColor})`;
 
     return (
-        <div className={`relative transition-all duration-300 ${isDragging ? 'scale-125' : 'group-hover:scale-110'}`}>
-            <svg viewBox="0 0 100 100" className="w-[3.25rem] h-[3.25rem] md:w-16 md:h-16 drop-shadow-md md:drop-shadow-2xl">
-                {/* Jersey Body */}
+        <div className={`relative transition-all duration-300 flex items-center justify-center ${isDragging ? 'scale-125 z-50' : 'group-hover:scale-110'}`}>
+            <svg viewBox="0 0 100 100" className="w-[3.5rem] h-[3.5rem] md:w-[4.5rem] md:h-[4.5rem]" style={{ filter: glowFilter }}>
+                <defs>
+                    <linearGradient id={`grad-${color}`} x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" style={{stopColor: outlineColor, stopOpacity: 0.3}} />
+                        <stop offset="100%" style={{stopColor: outlineColor, stopOpacity: 0.1}} />
+                    </linearGradient>
+                </defs>
+                {/* Shield Body */}
                 <path
-                    d="M25 20 L40 10 L60 10 L75 20 L85 35 L75 45 L75 90 L25 90 L25 45 L15 35 Z"
-                    fill={fillColor}
-                    className="transition-colors duration-500"
-                    stroke="rgba(255,255,255,0.4)"
-                    strokeWidth="1"
+                    d="M 50 5 L 90 20 L 90 55 C 90 75 50 95 50 95 C 50 95 10 75 10 55 L 10 20 Z"
+                    fill={`url(#grad-${color})`}
+                    stroke={outlineColor}
+                    strokeWidth="3.5"
                 />
-                {/* Collar */}
+                {/* Inner decorative line */}
                 <path
-                    d="M40 10 C45 15 55 15 60 10"
+                    d="M 50 14 L 80 26 L 80 52 C 80 67 50 82 50 82 C 50 82 20 67 20 52 L 20 26 Z"
                     fill="none"
-                    stroke="rgba(255,255,255,0.8)"
-                    strokeWidth="2"
-                    strokeLinecap="round"
+                    stroke={outlineColor}
+                    strokeWidth="1"
+                    strokeOpacity="0.6"
                 />
-                {/* Details/Side stripes */}
-                <path d="M25 45 L25 90" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
-                <path d="M75 45 L75 90" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
-
-                {/* Sleeve details */}
-                <path d="M25 20 L40 10" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
-                <path d="M75 20 L60 10" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
+                <text 
+                    x="50" y="55" 
+                    textAnchor="middle" 
+                    alignmentBaseline="middle" 
+                    fill="#ffffff" 
+                    fontSize="34" 
+                    fontWeight="bold" 
+                    fontFamily="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"
+                >
+                    {number || '#'}
+                </text>
             </svg>
         </div>
     );
@@ -72,8 +82,8 @@ const Player = ({ id, number, name, position, color = 'bg-blue-600', isOverlay, 
 
     return (
         <div ref={setNodeRef} style={style} {...listeners} {...attributes} className={`flex flex-col items-center group ${isReadOnly ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'}`}>
-            {/* Player Jersey */}
-            <JerseyIcon color={color} isDragging={isDragging} />
+            {/* Player Shield */}
+            <ShieldIcon color={color} isDragging={isDragging} number={number} />
 
             {/* Lock Button (Right Side) */}
             {!isOverlay && !isReadOnly && onToggleLock && (
@@ -84,8 +94,8 @@ const Player = ({ id, number, name, position, color = 'bg-blue-600', isOverlay, 
                     }}
                     onPointerDown={(e) => e.stopPropagation()}
                     className={`
-                        absolute top-0 -right-4 z-50 p-1.5 rounded-full cursor-pointer shadow-lg border border-white/30 transition-all active:scale-90
-                        ${locked ? 'bg-red-500 text-white' : 'bg-slate-800 text-gray-400 hover:text-white'}
+                        absolute top-0 -right-4 z-50 p-1.5 rounded-full cursor-pointer shadow-[0_0_10px_rgba(6,182,212,0.5)] border border-cyan-500/50 transition-all active:scale-90
+                        ${locked ? 'bg-red-500 text-white border-red-500/50 shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'bg-slate-900/80 text-cyan-400 hover:text-white hover:bg-cyan-900/80'}
                     `}
                     title={locked ? "Desbloquear" : "Bloquear posición"}
                 >
@@ -101,7 +111,7 @@ const Player = ({ id, number, name, position, color = 'bg-blue-600', isOverlay, 
                         onRemoveFromField();
                     }}
                     onPointerDown={(e) => e.stopPropagation()}
-                    className="absolute top-0 -left-4 z-50 p-1.5 rounded-full cursor-pointer shadow-lg border border-white/30 bg-slate-800 text-gray-400 hover:text-white hover:bg-red-500 transition-all active:scale-90"
+                    className="absolute top-0 -left-4 z-50 p-1.5 rounded-full cursor-pointer shadow-[0_0_10px_rgba(6,182,212,0.5)] border border-cyan-500/50 bg-slate-900/80 text-cyan-400 hover:text-white hover:bg-red-500/80 hover:border-red-500/50 hover:shadow-[0_0_10px_rgba(239,68,68,0.5)] transition-all active:scale-90"
                     title="Mandar al banco"
                 >
                     <X size={12} strokeWidth={3} />
@@ -111,9 +121,9 @@ const Player = ({ id, number, name, position, color = 'bg-blue-600', isOverlay, 
             {/* Name Label */}
             {!isOverlay && (
                 <div className={`
-                    mt-1 px-2.5 py-0.5 md:px-3 md:py-0.5 bg-black/80 backdrop-blur-sm md:backdrop-blur-md rounded-lg border border-white/10
-                    text-[8px] md:text-[10px] font-black text-white uppercase tracking-tighter text-center whitespace-nowrap
-                    transition-opacity duration-200 shadow-md md:shadow-xl
+                    mt-1 px-2.5 py-0.5 md:px-3 md:py-0.5 bg-slate-950/80 backdrop-blur-md rounded border border-cyan-500/40
+                    text-[8px] md:text-[10px] font-bold text-cyan-100 uppercase tracking-widest text-center whitespace-nowrap
+                    transition-opacity duration-200 shadow-[0_0_8px_rgba(6,182,212,0.3)]
                     ${isDragging ? 'opacity-0' : 'opacity-100'}
                 `}>
                     {name}

@@ -22,19 +22,20 @@ const DraggableListItem = ({ player, isSelected, isReadOnly, onClick, isDesktop,
     } : undefined;
 
     const colorMap = {
-        'bg-blue-600': '#2563eb',
-        'bg-red-600': '#dc2626',
-        'bg-emerald-600': '#059669',
-        'bg-yellow-500': '#eab308',
-        'bg-orange-500': '#f97316',
-        'bg-purple-600': '#9333ea',
-        'bg-pink-500': '#ec4899',
+        'bg-blue-600': '#06b6d4',
+        'bg-red-600': '#f43f5e',
+        'bg-emerald-600': '#10b981',
+        'bg-yellow-500': '#fbbf24',
+        'bg-orange-500': '#fb923c',
+        'bg-purple-600': '#a855f7',
+        'bg-pink-500': '#f472b6',
         'bg-sky-400': '#38bdf8',
-        'bg-slate-100': '#f1f5f9',
-        'bg-slate-800': '#1e293b',
+        'bg-slate-100': '#f8fafc',
+        'bg-slate-800': '#94a3b8',
     };
 
-    const fillColor = colorMap[customColor || player.color] || '#2563eb';
+    const outlineColor = colorMap[customColor || player.color] || '#06b6d4';
+    const glowFilter = `drop-shadow(0 0 5px ${outlineColor})`;
 
     return (
         <div
@@ -45,7 +46,7 @@ const DraggableListItem = ({ player, isSelected, isReadOnly, onClick, isDesktop,
             style={style}
             className={`
                 group flex items-center gap-2 rounded-2xl border transition-all duration-300
-                ${isSelected ? 'bg-blue-600/20 border-blue-500 scale-[1.02]' : 'bg-white/5 border-white/5 hover:bg-white/10'}
+                ${isSelected ? 'bg-cyan-900/40 border-cyan-500 scale-[1.02] shadow-[0_0_15px_rgba(6,182,212,0.3)]' : 'bg-slate-900/40 border-cyan-500/20 hover:bg-slate-800/60 hover:border-cyan-500/40'}
                 ${isReadOnly ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'}
                 ${isDesktop ? 'p-3' : 'flex-col p-1.5 w-20 justify-center text-center'}
                 ${isDragging ? 'opacity-0' : 'opacity-100'}
@@ -55,14 +56,37 @@ const DraggableListItem = ({ player, isSelected, isReadOnly, onClick, isDesktop,
             <div
                 className="relative flex items-center justify-center shrink-0"
             >
-                <svg viewBox="0 0 100 100" className={`${isDesktop ? 'w-12 h-12' : 'w-12 h-12'} drop-shadow-md`}>
+                <svg viewBox="0 0 100 100" className={`${isDesktop ? 'w-10 h-10' : 'w-10 h-10'}`} style={{ filter: glowFilter }}>
+                    <defs>
+                        <linearGradient id={`grad-side-${player.id}`} x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" style={{stopColor: outlineColor, stopOpacity: 0.3}} />
+                            <stop offset="100%" style={{stopColor: outlineColor, stopOpacity: 0.1}} />
+                        </linearGradient>
+                    </defs>
                     <path
-                        d="M25 20 L40 10 L60 10 L75 20 L85 35 L75 45 L75 90 L25 90 L25 45 L15 35 Z"
-                        fill={fillColor}
-                        className="transition-colors duration-500"
-                        stroke="rgba(255,255,255,0.4)"
-                        strokeWidth="1"
+                        d="M 50 5 L 90 20 L 90 55 C 90 75 50 95 50 95 C 50 95 10 75 10 55 L 10 20 Z"
+                        fill={`url(#grad-side-${player.id})`}
+                        stroke={outlineColor}
+                        strokeWidth="3.5"
                     />
+                    <path
+                        d="M 50 14 L 80 26 L 80 52 C 80 67 50 82 50 82 C 50 82 20 67 20 52 L 20 26 Z"
+                        fill="none"
+                        stroke={outlineColor}
+                        strokeWidth="1"
+                        strokeOpacity="0.6"
+                    />
+                    <text 
+                        x="50" y="55" 
+                        textAnchor="middle" 
+                        alignmentBaseline="middle" 
+                        fill="#ffffff" 
+                        fontSize="34" 
+                        fontWeight="bold" 
+                        fontFamily="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"
+                    >
+                        {player.number || '#'}
+                    </text>
                 </svg>
                 {player.isConfirmed && (
                     <div className="absolute -top-1 -right-1 bg-emerald-500/90 text-white rounded-full p-0.5 shadow-lg border border-white/20">
@@ -444,7 +468,7 @@ const Board = () => {
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
         >
-            <div className="h-screen w-full flex flex-col md:flex-row overflow-hidden bg-slate-950 font-sans">
+            <div className="h-screen w-full flex flex-col md:flex-row overflow-hidden bg-transparent font-sans">
 
                 {isFormOpen && (
                     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -505,7 +529,7 @@ const Board = () => {
                                         />
                                         {selectedPlayerId === p.id && (
                                             <div
-                                                className="absolute w-14 h-14 rounded-full border-4 border-blue-500 animate-pulse pointer-events-none"
+                                                className="absolute w-14 h-14 rounded-full border-[3px] border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.8)] animate-pulse pointer-events-none"
                                                 style={{
                                                     left: `${visualPos.x}%`,
                                                     top: `${visualPos.y}%`,
@@ -538,11 +562,11 @@ const Board = () => {
                 </div>
 
                 <div className={`
-                    bg-slate-900/95 md:bg-slate-900/90 md:backdrop-blur-3xl border-l border-white/10 text-white shadow-2xl z-50
+                    bg-slate-950/60 md:bg-slate-950/60 backdrop-blur-xl border-l border-cyan-500/20 text-cyan-50 shadow-[0_0_30px_rgba(6,182,212,0.1)] z-50
                     transition-all duration-300 md:duration-500 ease-in-out
                     ${isDesktop
                         ? 'w-80 h-full p-6 flex flex-col'
-                        : `fixed bottom-0 left-0 right-0 h-auto max-h-[60vh] rounded-t-[3rem] p-6 pb-8 flex flex-col border-t border-white/10 ${isSidebarCollapsed ? 'translate-y-[calc(100%-80px)]' : 'translate-y-0'}`
+                        : `fixed bottom-0 left-0 right-0 h-auto max-h-[60vh] rounded-t-[3rem] p-6 pb-8 flex flex-col border-t border-cyan-500/30 ${isSidebarCollapsed ? 'translate-y-[calc(100%-80px)]' : 'translate-y-0'}`
                     }
                 `}>
                     {!isDesktop && (
