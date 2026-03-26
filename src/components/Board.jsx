@@ -457,19 +457,30 @@ const Board = () => {
             let subMeds = substitutes.filter(isMedio);
             let subDels = substitutes.filter(isDelantero);
 
-            const fillMissing = (activeList, subList, requiredSlots) => {
-                const deficit = requiredSlots - activeList.length;
-                if (deficit > 0 && subList.length > 0) {
+            const fillOrTrim = (activeList, subList, requiredSlots) => {
+                if (activeList.length > requiredSlots) {
+                    const keeping = activeList.slice(0, requiredSlots);
+                    const benching = activeList.slice(requiredSlots).map(p => ({ ...p, onField: false }));
+                    return { active: keeping, benched: benching };
+                } else if (activeList.length < requiredSlots && subList.length > 0) {
+                    const deficit = requiredSlots - activeList.length;
                     const toAdd = subList.slice(0, deficit).map(p => ({ ...p, onField: true }));
-                    return [...activeList, ...toAdd];
+                    return { active: [...activeList, ...toAdd], benched: [] };
                 }
-                return activeList;
+                return { active: activeList, benched: [] };
             };
 
-            arqs = fillMissing(arqs, subArqs, layout.ARQ.length);
-            defs = fillMissing(defs, subDefs, layout.DEF.length);
-            meds = fillMissing(meds, subMeds, layout.MED.length);
-            dels = fillMissing(dels, subDels, layout.DEL.length);
+            const arqsData = fillOrTrim(arqs, subArqs, layout.ARQ.length);
+            const defsData = fillOrTrim(defs, subDefs, layout.DEF.length);
+            const medsData = fillOrTrim(meds, subMeds, layout.MED.length);
+            const delsData = fillOrTrim(dels, subDels, layout.DEL.length);
+
+            arqs = arqsData.active;
+            defs = defsData.active;
+            meds = medsData.active;
+            dels = delsData.active;
+
+            const allBenched = [...arqsData.benched, ...defsData.benched, ...medsData.benched, ...delsData.benched];
             
             const defOrder = { 'LAT_IZQ': 1, 'DEF': 2, 'LAT_DER': 3 };
             defs.sort((a, b) => (defOrder[a.positionType] || 2) - (defOrder[b.positionType] || 2));
@@ -493,8 +504,13 @@ const Board = () => {
             const allUpdatedOnField = [...newArqs, ...newDefs, ...newMeds, ...newDels];
 
             return prev.map(p => {
-                const updated = allUpdatedOnField.find(up => up.id === p.id);
-                return updated ? updated : p;
+                const updatedActive = allUpdatedOnField.find(up => up.id === p.id);
+                if (updatedActive) return updatedActive;
+                
+                const updatedBenched = allBenched.find(up => up.id === p.id);
+                if (updatedBenched) return updatedBenched;
+
+                return p;
             });
         });
     };
@@ -655,14 +671,6 @@ const Board = () => {
                                 );
                             })}
                         </Field>
-
-                        {isDesktop && (
-                            <div
-                                className={`absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-slate-900/80 to-transparent border-t border-white/10 pointer-events-none flex items-center justify-center`}
-                            >
-                                <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em]">Banco de Suplentes</span>
-                            </div>
-                        )}
                     </div>
 
                     {isDesktop && (
