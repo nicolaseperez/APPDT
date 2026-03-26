@@ -6,7 +6,46 @@ import { useMediaQuery } from '../hooks/useMediaQuery';
 import PlayerForm from './PlayerForm';
 import AuthButton from './AuthButton';
 import { useTactics } from '../hooks/useTactics';
-import { Pencil, Plus, Minus, Save, Share2, Lock, UserCheck, UserPlus, UserMinus, ChevronRight, CheckCircle2, Circle, ChevronUp, ChevronDown } from 'lucide-react';
+import { Pencil, Plus, Minus, Save, Share2, Lock, UserCheck, UserPlus, UserMinus, ChevronRight, CheckCircle2, Circle, ChevronUp, ChevronDown } from 'lucide-react';import { Pencil, Plus, Minus, Save, Share2, Lock, UserCheck, UserPlus, UserMinus, ChevronRight, CheckCircle2, Circle, ChevronUp, ChevronDown } from 'lucide-react';
+
+const formations = {
+    "4-3-3": {
+        ARQ: [{x: 50, y: 92}],
+        DEF: [{x: 15, y: 75}, {x: 38, y: 75}, {x: 62, y: 75}, {x: 85, y: 75}],
+        MED: [{x: 25, y: 45}, {x: 50, y: 45}, {x: 75, y: 45}],
+        DEL: [{x: 20, y: 20}, {x: 50, y: 20}, {x: 80, y: 20}]
+    },
+    "4-4-2": {
+        ARQ: [{x: 50, y: 92}],
+        DEF: [{x: 15, y: 75}, {x: 38, y: 75}, {x: 62, y: 75}, {x: 85, y: 75}],
+        MED: [{x: 15, y: 45}, {x: 38, y: 45}, {x: 62, y: 45}, {x: 85, y: 45}],
+        DEL: [{x: 35, y: 20}, {x: 65, y: 20}]
+    },
+    "4-2-3-1": {
+        ARQ: [{x: 50, y: 92}],
+        DEF: [{x: 15, y: 75}, {x: 38, y: 75}, {x: 62, y: 75}, {x: 85, y: 75}],
+        MED: [{x: 35, y: 55}, {x: 65, y: 55}, {x: 20, y: 35}, {x: 50, y: 35}, {x: 80, y: 35}],
+        DEL: [{x: 50, y: 15}]
+    },
+    "3-5-2": {
+        ARQ: [{x: 50, y: 92}],
+        DEF: [{x: 25, y: 75}, {x: 50, y: 75}, {x: 75, y: 75}],
+        MED: [{x: 10, y: 45}, {x: 30, y: 55}, {x: 50, y: 45}, {x: 70, y: 55}, {x: 90, y: 45}],
+        DEL: [{x: 35, y: 20}, {x: 65, y: 20}]
+    },
+    "3-4-3": {
+        ARQ: [{x: 50, y: 92}],
+        DEF: [{x: 25, y: 75}, {x: 50, y: 75}, {x: 75, y: 75}],
+        MED: [{x: 15, y: 45}, {x: 38, y: 45}, {x: 62, y: 45}, {x: 85, y: 45}],
+        DEL: [{x: 20, y: 20}, {x: 50, y: 20}, {x: 80, y: 20}]
+    },
+    "5-3-2": {
+        ARQ: [{x: 50, y: 92}],
+        DEF: [{x: 10, y: 70}, {x: 30, y: 78}, {x: 50, y: 78}, {x: 70, y: 78}, {x: 90, y: 70}],
+        MED: [{x: 25, y: 45}, {x: 50, y: 45}, {x: 75, y: 45}],
+        DEL: [{x: 35, y: 20}, {x: 65, y: 20}]
+    }
+};
 
 const DraggableListItem = ({ player, isSelected, isReadOnly, onClick, isDesktop, customColor, onToggleConfirm, idPrefix = 'side' }) => {
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -386,6 +425,68 @@ const Board = () => {
         setPlayers(players.map(p => p.id === id ? { ...p, locked: !p.locked } : p));
     };
 
+    const handleApplyFormation = (formationKey) => {
+        if (isReadOnly || !formationKey) return;
+        
+        const layout = formations[formationKey];
+        if (!layout) return;
+
+        setPlayers(prev => {
+            let onFieldPlayers = prev.filter(p => p.onField);
+            
+            let arqs = onFieldPlayers.filter(p => !p.positionType || p.positionType === 'ARQ');
+            let defs = onFieldPlayers.filter(p => ['DEF', 'LAT_IZQ', 'LAT_DER'].includes(p.positionType));
+            let meds = onFieldPlayers.filter(p => ['MED', 'VOL_IZQ', 'VOL_DER'].includes(p.positionType));
+            let dels = onFieldPlayers.filter(p => p.positionType === 'DEL');
+
+            let substitutes = prev.filter(p => p.isConfirmed && !p.onField);
+            let subArqs = substitutes.filter(p => !p.positionType || p.positionType === 'ARQ');
+            let subDefs = substitutes.filter(p => ['DEF', 'LAT_IZQ', 'LAT_DER'].includes(p.positionType));
+            let subMeds = substitutes.filter(p => ['MED', 'VOL_IZQ', 'VOL_DER'].includes(p.positionType));
+            let subDels = substitutes.filter(p => p.positionType === 'DEL');
+
+            const fillMissing = (activeList, subList, requiredSlots) => {
+                const deficit = requiredSlots - activeList.length;
+                if (deficit > 0 && subList.length > 0) {
+                    const toAdd = subList.slice(0, deficit).map(p => ({ ...p, onField: true }));
+                    return [...activeList, ...toAdd];
+                }
+                return activeList;
+            };
+
+            arqs = fillMissing(arqs, subArqs, layout.ARQ.length);
+            defs = fillMissing(defs, subDefs, layout.DEF.length);
+            meds = fillMissing(meds, subMeds, layout.MED.length);
+            dels = fillMissing(dels, subDels, layout.DEL.length);
+            
+            const defOrder = { 'LAT_IZQ': 1, 'DEF': 2, 'LAT_DER': 3 };
+            defs.sort((a, b) => (defOrder[a.positionType] || 2) - (defOrder[b.positionType] || 2));
+            
+            const medOrder = { 'VOL_IZQ': 1, 'MED': 2, 'VOL_DER': 3 };
+            meds.sort((a, b) => (medOrder[a.positionType] || 2) - (medOrder[b.positionType] || 2));
+
+            const assignSlots = (playersList, slots) => {
+                return playersList.map((p, index) => {
+                    const slot = slots[Math.min(index, slots.length - 1)]; 
+                    if (!slot) return p;
+                    return { ...p, x: slot.x, y: slot.y };
+                });
+            };
+
+            const newArqs = assignSlots(arqs, layout.ARQ);
+            const newDefs = assignSlots(defs, layout.DEF);
+            const newMeds = assignSlots(meds, layout.MED);
+            const newDels = assignSlots(dels, layout.DEL);
+
+            const allUpdatedOnField = [...newArqs, ...newDefs, ...newMeds, ...newDels];
+
+            return prev.map(p => {
+                const updated = allUpdatedOnField.find(up => up.id === p.id);
+                return updated ? updated : p;
+            });
+        });
+    };
+
     const getVisualPosition = (logicalX, logicalY) => {
         if (orientation === 'horizontal') {
             return { x: logicalY, y: 100 - logicalX };
@@ -619,33 +720,56 @@ const Board = () => {
                         </div>
                     </div>
 
-                    {/* Color Selectors */}
-                    {isDesktop && !isReadOnly && (
-                        <div className="mb-6 space-y-4 bg-white/5 p-4 rounded-3xl border border-white/5">
-                            <div className="space-y-2">
-                                <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Color Jugadores</label>
-                                <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
-                                    {jerseyColors.map((c) => (
-                                        <button
-                                            key={`team-${c.class}`}
-                                            onClick={() => setTeamColor(c.class)}
-                                            className={`w-5 h-5 rounded-full border-2 shrink-0 transition-all ${c.class} ${teamColor === c.class ? 'border-white scale-110' : 'border-transparent opacity-40 hover:opacity-100'}`}
-                                        />
-                                    ))}
-                                </div>
+                    {/* Configuraciones: Formación y Colores */}
+                    {!isReadOnly && (
+                        <div className={`mb-6 space-y-4 ${isDesktop ? 'bg-white/5 p-4 rounded-3xl border border-white/5' : ''}`}>
+                            <div className="space-y-2 text-left">
+                                <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Formación Automática</label>
+                                <select 
+                                    onChange={(e) => {
+                                        handleApplyFormation(e.target.value);
+                                        e.target.value = ""; 
+                                    }}
+                                    className="w-full bg-slate-900 border border-cyan-500/30 text-cyan-400 text-sm rounded-xl px-3 py-2 outline-none focus:border-cyan-400 transition-colors"
+                                >
+                                    <option value="">Seleccionar formación...</option>
+                                    <option value="4-3-3">4-3-3</option>
+                                    <option value="4-4-2">4-4-2</option>
+                                    <option value="4-2-3-1">4-2-3-1</option>
+                                    <option value="3-5-2">3-5-2</option>
+                                    <option value="3-4-3">3-4-3</option>
+                                    <option value="5-3-2">5-3-2</option>
+                                </select>
                             </div>
-                            <div className="space-y-2">
-                                <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Color Arquero</label>
-                                <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
-                                    {jerseyColors.map((c) => (
-                                        <button
-                                            key={`gk-${c.class}`}
-                                            onClick={() => setGkColor(c.class)}
-                                            className={`w-5 h-5 rounded-full border-2 shrink-0 transition-all ${c.class} ${gkColor === c.class ? 'border-white scale-110' : 'border-transparent opacity-40 hover:opacity-100'}`}
-                                        />
-                                    ))}
-                                </div>
-                            </div>
+                            
+                            {isDesktop && (
+                                <>
+                                    <div className="space-y-2 text-left">
+                                        <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Color Jugadores</label>
+                                        <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
+                                            {jerseyColors.map((c) => (
+                                                <button
+                                                    key={`team-${c.class}`}
+                                                    onClick={() => setTeamColor(c.class)}
+                                                    className={`w-5 h-5 rounded-full border-2 shrink-0 transition-all ${c.class} ${teamColor === c.class ? 'border-white scale-110' : 'border-transparent opacity-40 hover:opacity-100'}`}
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2 text-left">
+                                        <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Color Arquero</label>
+                                        <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
+                                            {jerseyColors.map((c) => (
+                                                <button
+                                                    key={`gk-${c.class}`}
+                                                    onClick={() => setGkColor(c.class)}
+                                                    className={`w-5 h-5 rounded-full border-2 shrink-0 transition-all ${c.class} ${gkColor === c.class ? 'border-white scale-110' : 'border-transparent opacity-40 hover:opacity-100'}`}
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     )}
 
