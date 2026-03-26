@@ -10,37 +10,37 @@ import { Pencil, Plus, Minus, Save, Share2, Lock, UserCheck, UserPlus, UserMinus
 
 const formations = {
     "4-3-3": {
-        ARQ: [{x: 50, y: 92}],
+        ARQ: [{x: 50, y: 90}],
         DEF: [{x: 15, y: 75}, {x: 38, y: 75}, {x: 62, y: 75}, {x: 85, y: 75}],
         MED: [{x: 25, y: 45}, {x: 50, y: 45}, {x: 75, y: 45}],
         DEL: [{x: 20, y: 20}, {x: 50, y: 20}, {x: 80, y: 20}]
     },
     "4-4-2": {
-        ARQ: [{x: 50, y: 92}],
+        ARQ: [{x: 50, y: 90}],
         DEF: [{x: 15, y: 75}, {x: 38, y: 75}, {x: 62, y: 75}, {x: 85, y: 75}],
         MED: [{x: 15, y: 45}, {x: 38, y: 45}, {x: 62, y: 45}, {x: 85, y: 45}],
         DEL: [{x: 35, y: 20}, {x: 65, y: 20}]
     },
     "4-2-3-1": {
-        ARQ: [{x: 50, y: 92}],
+        ARQ: [{x: 50, y: 90}],
         DEF: [{x: 15, y: 75}, {x: 38, y: 75}, {x: 62, y: 75}, {x: 85, y: 75}],
         MED: [{x: 35, y: 55}, {x: 65, y: 55}, {x: 20, y: 35}, {x: 50, y: 35}, {x: 80, y: 35}],
         DEL: [{x: 50, y: 15}]
     },
     "3-5-2": {
-        ARQ: [{x: 50, y: 92}],
+        ARQ: [{x: 50, y: 90}],
         DEF: [{x: 25, y: 75}, {x: 50, y: 75}, {x: 75, y: 75}],
         MED: [{x: 10, y: 45}, {x: 30, y: 55}, {x: 50, y: 45}, {x: 70, y: 55}, {x: 90, y: 45}],
         DEL: [{x: 35, y: 20}, {x: 65, y: 20}]
     },
     "3-4-3": {
-        ARQ: [{x: 50, y: 92}],
+        ARQ: [{x: 50, y: 90}],
         DEF: [{x: 25, y: 75}, {x: 50, y: 75}, {x: 75, y: 75}],
         MED: [{x: 15, y: 45}, {x: 38, y: 45}, {x: 62, y: 45}, {x: 85, y: 45}],
         DEL: [{x: 20, y: 20}, {x: 50, y: 20}, {x: 80, y: 20}]
     },
     "5-3-2": {
-        ARQ: [{x: 50, y: 92}],
+        ARQ: [{x: 50, y: 90}],
         DEF: [{x: 10, y: 70}, {x: 30, y: 78}, {x: 50, y: 78}, {x: 70, y: 78}, {x: 90, y: 70}],
         MED: [{x: 25, y: 45}, {x: 50, y: 45}, {x: 75, y: 45}],
         DEL: [{x: 35, y: 20}, {x: 65, y: 20}]
@@ -433,17 +433,29 @@ const Board = () => {
 
         setPlayers(prev => {
             let onFieldPlayers = prev.filter(p => p.onField);
+
+            const isArquero = (p) => {
+                const pos = p.positionType?.toUpperCase();
+                const name = p.name?.toUpperCase();
+                return pos === 'ARQ' || !pos || name === 'GK' || name?.includes('ARQUERO') || name?.includes('ARQ');
+            };
+
+            const isDefensor = (p) => !isArquero(p) && ['DEF', 'LAT_IZQ', 'LAT_DER'].includes(p.positionType);
+            const isDelantero = (p) => !isArquero(p) && p.positionType === 'DEL';
             
-            let arqs = onFieldPlayers.filter(p => !p.positionType || p.positionType === 'ARQ');
-            let defs = onFieldPlayers.filter(p => ['DEF', 'LAT_IZQ', 'LAT_DER'].includes(p.positionType));
-            let meds = onFieldPlayers.filter(p => ['MED', 'VOL_IZQ', 'VOL_DER'].includes(p.positionType));
-            let dels = onFieldPlayers.filter(p => p.positionType === 'DEL');
+            // Si no es arquero, defensor o delantero explícitamente, asume que es medio
+            const isMedio = (p) => !isArquero(p) && !isDefensor(p) && !isDelantero(p);
+            
+            let arqs = onFieldPlayers.filter(isArquero);
+            let defs = onFieldPlayers.filter(isDefensor);
+            let meds = onFieldPlayers.filter(isMedio);
+            let dels = onFieldPlayers.filter(isDelantero);
 
             let substitutes = prev.filter(p => p.isConfirmed && !p.onField);
-            let subArqs = substitutes.filter(p => !p.positionType || p.positionType === 'ARQ');
-            let subDefs = substitutes.filter(p => ['DEF', 'LAT_IZQ', 'LAT_DER'].includes(p.positionType));
-            let subMeds = substitutes.filter(p => ['MED', 'VOL_IZQ', 'VOL_DER'].includes(p.positionType));
-            let subDels = substitutes.filter(p => p.positionType === 'DEL');
+            let subArqs = substitutes.filter(isArquero);
+            let subDefs = substitutes.filter(isDefensor);
+            let subMeds = substitutes.filter(isMedio);
+            let subDels = substitutes.filter(isDelantero);
 
             const fillMissing = (activeList, subList, requiredSlots) => {
                 const deficit = requiredSlots - activeList.length;
