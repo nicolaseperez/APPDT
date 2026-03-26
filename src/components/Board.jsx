@@ -182,6 +182,7 @@ const Board = () => {
 
     const [activeId, setActiveId] = useState(null);
     const [selectedPlayerId, setSelectedPlayerId] = useState(null);
+    const [activeFormation, setActiveFormation] = useState("");
     const [showAddForm, setShowAddForm] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -746,9 +747,10 @@ const Board = () => {
                             <div className="space-y-2 text-left">
                                 <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Formación Automática</label>
                                 <select 
+                                    value={activeFormation}
                                     onChange={(e) => {
+                                        setActiveFormation(e.target.value);
                                         handleApplyFormation(e.target.value);
-                                        e.target.value = ""; 
                                     }}
                                     className="w-full bg-slate-900 border border-cyan-500/30 text-cyan-400 text-sm rounded-xl px-3 py-2 outline-none focus:border-cyan-400 transition-colors"
                                 >
