@@ -186,6 +186,7 @@ const Board = () => {
     const [showAddForm, setShowAddForm] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+    const [isEditingName, setIsEditingName] = useState(false);
     const [touchStartY, setTouchStartY] = useState(null);
 
     const handleTouchStart = (e) => {
@@ -709,36 +710,79 @@ const Board = () => {
 
                     <div className={`flex justify-between items-center ${isDesktop ? 'mb-6 border-b border-white/10 pb-6' : 'mb-4'}`}>
                         {isDesktop ? (
-                            <h2 className="text-2xl font-black text-white uppercase tracking-tighter">
-                                {isReadOnly ? (
-                                    'Táctica Compartida'
-                                ) : (
-                                    <input 
-                                        type="text" 
-                                        value={teamName} 
-                                        onChange={(e) => setTeamName(e.target.value)} 
-                                        className="bg-transparent border-none outline-none text-white w-40 overflow-hidden text-ellipsis whitespace-nowrap focus:ring-0 p-0 m-0 leading-none"
-                                        placeholder="MI EQUIPO"
-                                    />
+                            <div className="flex items-center gap-2">
+                                <h2 className="text-2xl font-black text-white uppercase tracking-tighter flex items-center">
+                                    {isReadOnly ? (
+                                        'Táctica Compartida'
+                                    ) : (
+                                        isEditingName ? (
+                                            <input 
+                                                type="text" 
+                                                value={teamName} 
+                                                onChange={(e) => setTeamName(e.target.value)}
+                                                onBlur={() => setIsEditingName(false)}
+                                                onKeyDown={(e) => e.key === 'Enter' && setIsEditingName(false)}
+                                                autoFocus
+                                                className="bg-transparent border-b border-cyan-500/50 outline-none text-cyan-50 w-48 focus:ring-0 p-0 m-0 leading-none"
+                                                placeholder="MI EQUIPO"
+                                            />
+                                        ) : (
+                                            <span 
+                                                className="cursor-pointer truncate max-w-[180px]" 
+                                                onClick={() => setIsEditingName(true)}
+                                            >
+                                                {teamName || 'MI EQUIPO'}
+                                            </span>
+                                        )
+                                    )}
+                                </h2>
+                                {!isReadOnly && !isEditingName && (
+                                    <button 
+                                        onClick={() => setIsEditingName(true)}
+                                        className="text-gray-500 hover:text-white transition-colors"
+                                        title="Editar nombre del equipo"
+                                    >
+                                        <Pencil size={16} />
+                                    </button>
                                 )}
-                            </h2>
+                            </div>
                         ) : (
                             <div
                                 className="flex items-center gap-2 cursor-pointer"
                                 onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
                             >
-                                <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center">
+                                <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
                                     {isReadOnly ? (
                                         'TÁCTICA COMPARTIDA'
                                     ) : (
-                                        <input 
-                                            type="text" 
-                                            value={teamName} 
-                                            onChange={(e) => setTeamName(e.target.value)} 
-                                            onClick={(e) => e.stopPropagation()}
-                                            className="bg-transparent border-none outline-none text-gray-400 uppercase w-32 focus:ring-0 p-0 m-0"
-                                            placeholder="MI EQUIPO"
-                                        />
+                                        isEditingName ? (
+                                            <input 
+                                                type="text" 
+                                                value={teamName} 
+                                                onChange={(e) => setTeamName(e.target.value)} 
+                                                onClick={(e) => e.stopPropagation()}
+                                                onBlur={() => setIsEditingName(false)}
+                                                onKeyDown={(e) => e.key === 'Enter' && setIsEditingName(false)}
+                                                autoFocus
+                                                className="bg-transparent border-b border-cyan-500/50 outline-none text-cyan-400 uppercase w-24 focus:ring-0 p-0 m-0 leading-tight"
+                                                placeholder="MI EQUIPO"
+                                            />
+                                        ) : (
+                                            <>
+                                                <span 
+                                                    className="truncate max-w-[100px]"
+                                                    onClick={(e) => { e.stopPropagation(); setIsEditingName(true); }}
+                                                >
+                                                    {teamName || 'MI EQUIPO'}
+                                                </span>
+                                                <button 
+                                                    onClick={(e) => { e.stopPropagation(); setIsEditingName(true); }}
+                                                    className="text-gray-500 hover:text-gray-300 transition-colors"
+                                                >
+                                                    <Pencil size={10} />
+                                                </button>
+                                            </>
+                                        )
                                     )}
                                 </div>
                                 {isSidebarCollapsed ? <ChevronUp size={14} className="text-blue-500 animate-bounce" /> : <ChevronDown size={14} className="text-gray-600" />}
