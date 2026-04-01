@@ -708,45 +708,65 @@ const Board = () => {
                         </div>
                     )}
 
-                    <div className={`flex justify-between items-center ${isDesktop ? 'mb-6 border-b border-white/10 pb-6' : 'mb-4'}`}>
-                        {isDesktop ? (
-                            <div className="flex items-center gap-2">
-                                <h2 className="text-2xl font-black text-white uppercase tracking-tighter flex items-center">
-                                    {isReadOnly ? (
-                                        'Táctica Compartida'
-                                    ) : (
-                                        isEditingName ? (
-                                            <input 
-                                                type="text" 
-                                                value={teamName} 
-                                                onChange={(e) => setTeamName(e.target.value)}
-                                                onBlur={() => setIsEditingName(false)}
-                                                onKeyDown={(e) => e.key === 'Enter' && setIsEditingName(false)}
-                                                autoFocus
-                                                className="bg-transparent border-b border-cyan-500/50 outline-none text-cyan-50 w-48 focus:ring-0 p-0 m-0 leading-none"
-                                                placeholder="MI EQUIPO"
-                                            />
+                    {isDesktop ? (
+                        <div className="flex flex-col gap-4 mb-6 border-b border-white/10 pb-6">
+                            <div className="flex justify-between items-center">
+                                <div className="flex items-center gap-2">
+                                    <h2 className="text-2xl font-black text-white uppercase tracking-tighter flex items-center">
+                                        {isReadOnly ? (
+                                            'Táctica Compartida'
                                         ) : (
-                                            <span 
-                                                className="cursor-pointer truncate max-w-[180px]" 
-                                                onClick={() => setIsEditingName(true)}
-                                            >
-                                                {teamName || 'MI EQUIPO'}
-                                            </span>
-                                        )
+                                            isEditingName ? (
+                                                <input 
+                                                    type="text" 
+                                                    value={teamName} 
+                                                    onChange={(e) => setTeamName(e.target.value)}
+                                                    onBlur={() => setIsEditingName(false)}
+                                                    onKeyDown={(e) => e.key === 'Enter' && setIsEditingName(false)}
+                                                    autoFocus
+                                                    className="bg-transparent border-b border-cyan-500/50 outline-none text-cyan-50 w-48 focus:ring-0 p-0 m-0 leading-none"
+                                                    placeholder="MI EQUIPO"
+                                                />
+                                            ) : (
+                                                <span 
+                                                    className="cursor-pointer truncate max-w-[180px]" 
+                                                    onClick={() => setIsEditingName(true)}
+                                                >
+                                                    {teamName || 'MI EQUIPO'}
+                                                </span>
+                                            )
+                                        )}
+                                    </h2>
+                                    {!isReadOnly && !isEditingName && (
+                                        <button 
+                                            onClick={() => setIsEditingName(true)}
+                                            className="text-gray-500 hover:text-white transition-colors"
+                                            title="Editar nombre del equipo"
+                                        >
+                                            <Pencil size={16} />
+                                        </button>
                                     )}
-                                </h2>
-                                {!isReadOnly && !isEditingName && (
-                                    <button 
-                                        onClick={() => setIsEditingName(true)}
-                                        className="text-gray-500 hover:text-white transition-colors"
-                                        title="Editar nombre del equipo"
-                                    >
-                                        <Pencil size={16} />
-                                    </button>
-                                )}
+                                </div>
+                                
+                                <div className="flex gap-2 items-center">
+                                    {!isReadOnly && <AuthButton />}
+                                    {user && !isReadOnly && (
+                                        <>
+                                            <button onClick={handleShare} className="bg-white/5 hover:bg-white/10 text-white p-2.5 rounded-xl transition-all border border-white/10 active:scale-90" title="Compartir Táctica"><Share2 size={22} /></button>
+                                            <button onClick={handleSave} disabled={isSaving} className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white p-2.5 rounded-xl transition-all active:scale-90" title="Guardar Cambios"><Save size={22} className={isSaving ? 'animate-spin' : ''} /></button>
+                                        </>
+                                    )}
+                                </div>
                             </div>
-                        ) : (
+                            
+                            {!isReadOnly && (
+                                <button onClick={() => { setShowAddForm(true); setSelectedPlayerId(null); }} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white p-3 rounded-xl transition-all shadow-xl shadow-emerald-900/20 flex items-center justify-center gap-2 active:scale-95">
+                                    <Plus size={22} /> <span className="font-bold tracking-widest uppercase text-sm">Agregar Jugador</span>
+                                </button>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="flex justify-between items-center mb-4">
                             <div
                                 className="flex items-center gap-2 cursor-pointer"
                                 onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
@@ -787,24 +807,23 @@ const Board = () => {
                                 </div>
                                 {isSidebarCollapsed ? <ChevronUp size={14} className="text-blue-500 animate-bounce" /> : <ChevronDown size={14} className="text-gray-600" />}
                             </div>
-                        )}
 
-                        <div className="flex gap-2 items-center">
-                            {isDesktop && !isReadOnly && <AuthButton />}
-                            {user && !isReadOnly && (
-                                <>
-                                    <button onClick={handleShare} className="bg-white/5 hover:bg-white/10 text-white p-2.5 rounded-xl transition-all border border-white/10 active:scale-90"><Share2 size={isDesktop ? 22 : 18} /></button>
-                                    <button onClick={handleSave} disabled={isSaving} className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white p-2.5 rounded-xl transition-all active:scale-90"><Save size={isDesktop ? 22 : 18} className={isSaving ? 'animate-spin' : ''} /></button>
-                                </>
-                            )}
-                            {!isReadOnly && (
-                                <button onClick={() => { setShowAddForm(true); setSelectedPlayerId(null); }} className="bg-emerald-600 hover:bg-emerald-500 text-white p-2.5 rounded-xl transition-all shadow-xl shadow-emerald-900/20 flex items-center gap-1 active:scale-95">
-                                    <Plus size={isDesktop ? 22 : 18} /> <span className="text-xs font-bold hidden md:inline ml-1 uppercase">Agregar</span>
-                                </button>
-                            )}
-                            {!isDesktop && !isReadOnly && <div className="scale-90 origin-right"><AuthButton /></div>}
+                            <div className="flex gap-2 items-center">
+                                {user && !isReadOnly && (
+                                    <>
+                                        <button onClick={handleShare} className="bg-white/5 hover:bg-white/10 text-white p-2 rounded-xl transition-all border border-white/10 active:scale-90"><Share2 size={18} /></button>
+                                        <button onClick={handleSave} disabled={isSaving} className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white p-2 rounded-xl transition-all active:scale-90"><Save size={18} className={isSaving ? 'animate-spin' : ''} /></button>
+                                    </>
+                                )}
+                                {!isReadOnly && (
+                                    <button onClick={() => { setShowAddForm(true); setSelectedPlayerId(null); }} className="bg-emerald-600 hover:bg-emerald-500 text-white p-2 rounded-xl transition-all shadow-xl shadow-emerald-900/20 flex items-center justify-center active:scale-95">
+                                        <Plus size={18} />
+                                    </button>
+                                )}
+                                {!isReadOnly && <div className="scale-90 origin-right"><AuthButton /></div>}
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* Configuraciones: Formación y Colores */}
                     {!isReadOnly && (
