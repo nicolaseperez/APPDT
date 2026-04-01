@@ -16,6 +16,7 @@ export function useTactics(initialPlayers) {
     const [players, setPlayers] = useState(initialPlayers);
     const [teamColor, setTeamColor] = useState('bg-blue-600');
     const [gkColor, setGkColor] = useState('bg-yellow-500');
+    const [teamName, setTeamName] = useState('MI EQUIPO');
     const [loadingConfig, setLoadingConfig] = useState(false);
     const [error, setError] = useState(null);
 
@@ -48,6 +49,7 @@ export function useTactics(initialPlayers) {
                 }
                 if (data.teamColor) setTeamColor(data.teamColor);
                 if (data.gkColor) setGkColor(data.gkColor);
+                if (data.teamName) setTeamName(data.teamName);
             }
         }, (err) => {
             console.error("Firestore Error:", err);
@@ -84,6 +86,7 @@ export function useTactics(initialPlayers) {
                 players: cleanPlayers,
                 teamColor,
                 gkColor,
+                teamName,
                 updatedAt: new Date()
             });
         } catch (e) {
@@ -92,5 +95,5 @@ export function useTactics(initialPlayers) {
         }
     };
 
-    return { players, setPlayers, teamColor, setTeamColor, gkColor, setGkColor, saveTactics, user, isReadOnly, loadingConfig, error };
+    return { players, setPlayers, teamColor, setTeamColor, gkColor, setGkColor, teamName, setTeamName, saveTactics, user, isReadOnly, loadingConfig, error };
 }

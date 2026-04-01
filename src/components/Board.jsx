@@ -178,7 +178,7 @@ const Board = () => {
         { id: 'p7', number: 7, name: 'FWD', x: 50, y: 20, color: 'bg-red-600', positionType: 'DEL', locked: false, onField: true },
     ];
 
-    const { players, setPlayers, teamColor, setTeamColor, gkColor, setGkColor, saveTactics, user, isReadOnly, error } = useTactics(initialPlayers);
+    const { players, setPlayers, teamColor, setTeamColor, gkColor, setGkColor, teamName, setTeamName, saveTactics, user, isReadOnly, error } = useTactics(initialPlayers);
 
     const [activeId, setActiveId] = useState(null);
     const [selectedPlayerId, setSelectedPlayerId] = useState(null);
@@ -687,7 +687,7 @@ const Board = () => {
                     bg-slate-950/60 md:bg-slate-950/60 backdrop-blur-xl border-l border-cyan-500/20 text-cyan-50 shadow-[0_0_30px_rgba(6,182,212,0.1)] z-50
                     transition-all duration-300 md:duration-500 ease-in-out
                     ${isDesktop
-                        ? 'w-80 h-full p-6 flex flex-col'
+                        ? 'w-96 h-full p-6 flex flex-col'
                         : `fixed bottom-0 left-0 right-0 h-auto max-h-[60vh] rounded-t-[3rem] p-6 pb-8 flex flex-col border-t border-cyan-500/30 ${isSidebarCollapsed ? 'translate-y-[calc(100%-80px)]' : 'translate-y-0'}`
                     }
                 `}>
@@ -710,15 +710,36 @@ const Board = () => {
                     <div className={`flex justify-between items-center ${isDesktop ? 'mb-6 border-b border-white/10 pb-6' : 'mb-4'}`}>
                         {isDesktop ? (
                             <h2 className="text-2xl font-black text-white uppercase tracking-tighter">
-                                {isReadOnly ? 'Táctica Compartida' : 'Mi Equipo'} <span className="text-xs font-medium bg-blue-600 px-2.5 py-1 rounded-full ml-1 align-middle">{players.length}</span>
+                                {isReadOnly ? (
+                                    'Táctica Compartida'
+                                ) : (
+                                    <input 
+                                        type="text" 
+                                        value={teamName} 
+                                        onChange={(e) => setTeamName(e.target.value)} 
+                                        className="bg-transparent border-none outline-none text-white w-40 overflow-hidden text-ellipsis whitespace-nowrap focus:ring-0 p-0 m-0 leading-none"
+                                        placeholder="MI EQUIPO"
+                                    />
+                                )}
                             </h2>
                         ) : (
                             <div
                                 className="flex items-center gap-2 cursor-pointer"
                                 onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
                             >
-                                <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                                    {isReadOnly ? 'TÁCTICA COMPARTIDA' : 'PLANTILLA'}
+                                <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center">
+                                    {isReadOnly ? (
+                                        'TÁCTICA COMPARTIDA'
+                                    ) : (
+                                        <input 
+                                            type="text" 
+                                            value={teamName} 
+                                            onChange={(e) => setTeamName(e.target.value)} 
+                                            onClick={(e) => e.stopPropagation()}
+                                            className="bg-transparent border-none outline-none text-gray-400 uppercase w-32 focus:ring-0 p-0 m-0"
+                                            placeholder="MI EQUIPO"
+                                        />
+                                    )}
                                 </div>
                                 {isSidebarCollapsed ? <ChevronUp size={14} className="text-blue-500 animate-bounce" /> : <ChevronDown size={14} className="text-gray-600" />}
                             </div>
@@ -796,6 +817,10 @@ const Board = () => {
                     )}
 
                     <div className={`flex-1 overflow-y-auto pr-1 scrollbar-hide`}>
+                        <div className="mb-4 bg-cyan-950/40 border border-cyan-800/50 rounded-xl p-3 flex justify-between items-center shadow-inner">
+                            <span className="text-[10px] font-black text-cyan-400 uppercase tracking-widest">Jugadores Totales</span>
+                            <span className="bg-cyan-500/20 text-cyan-300 px-2 py-0.5 rounded-lg text-xs font-bold border border-cyan-500/20">{players.length}</span>
+                        </div>
                         {renderPlayerList(confirmedPlayers, isReadOnly ? "Suplentes" : "Lista de Convocados", true, 'side-conf')}
                         {!isReadOnly && renderPlayerList(generalPlayers, "Lista General", false, 'side-all')}
                     </div>
