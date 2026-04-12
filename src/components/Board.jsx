@@ -58,6 +58,7 @@ const DraggableListItem = ({ player, isSelected, isReadOnly, onClick, isDesktop,
         transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
         zIndex: 100,
         opacity: 0.5,
+        transition: 'none',
     } : undefined;
 
     const colorMap = {
@@ -74,7 +75,7 @@ const DraggableListItem = ({ player, isSelected, isReadOnly, onClick, isDesktop,
     };
 
     const outlineColor = colorMap[customColor || player.color] || '#06b6d4';
-    const glowFilter = `drop-shadow(0 0 5px ${outlineColor})`;
+    const glowFilter = (!isDesktop || isDragging) ? 'none' : `drop-shadow(0 0 5px ${outlineColor})`;
 
     return (
         <div
@@ -84,8 +85,8 @@ const DraggableListItem = ({ player, isSelected, isReadOnly, onClick, isDesktop,
             onClick={onClick}
             style={style}
             className={`
-                group flex items-center gap-2 rounded-2xl border transition-all duration-300
-                ${isSelected ? 'bg-cyan-900/40 border-cyan-500 scale-[1.02] shadow-[0_0_15px_rgba(6,182,212,0.3)]' : 'bg-slate-900/40 border-cyan-500/20 hover:bg-slate-800/60 hover:border-cyan-500/40'}
+                group flex items-center gap-2 rounded-2xl border transition-colors duration-300
+                ${isSelected ? 'bg-cyan-900/40 border-cyan-500 scale-[1.02] md:shadow-[0_0_15px_rgba(6,182,212,0.3)]' : 'bg-slate-900/40 border-cyan-500/20 hover:bg-slate-800/60 hover:border-cyan-500/40'}
                 ${isReadOnly ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'}
                 ${isDesktop ? 'p-3' : 'flex-col p-1.5 w-20 justify-center text-center'}
                 ${isDragging ? 'opacity-0' : 'opacity-100'}
@@ -246,6 +247,10 @@ const Board = () => {
     const handleDragStart = (event) => {
         if (isReadOnly) return;
         setActiveId(event.active.id);
+        const isFromSidebar = String(event.active.id).startsWith('side-');
+        if (isFromSidebar && !isDesktop) {
+            setIsSidebarCollapsed(true);
+        }
     };
 
     const handleToggleConfirm = (id) => {
@@ -266,6 +271,7 @@ const Board = () => {
         // If from sidebar and not over field, don't do anything (snaps back)
         if (isFromSidebar && !overField) {
             setActiveId(null);
+            if (!isDesktop) setIsSidebarCollapsed(false);
             return;
         }
 
@@ -319,6 +325,7 @@ const Board = () => {
 
         if (isNaN(newX) || isNaN(newY)) {
             setActiveId(null);
+            if (!isDesktop) setIsSidebarCollapsed(false);
             return;
         }
 
@@ -371,6 +378,16 @@ const Board = () => {
         });
 
         setActiveId(null);
+        if (!isDesktop) {
+            setIsSidebarCollapsed(false);
+        }
+    };
+
+    const handleDragCancel = () => {
+        setActiveId(null);
+        if (!isDesktop) {
+            setIsSidebarCollapsed(false);
+        }
     };
 
     const handleAddPlayer = (playerData) => {
@@ -598,6 +615,7 @@ const Board = () => {
             sensors={sensors}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
+            onDragCancel={handleDragCancel}
         >
             <div className="h-screen w-full flex flex-col md:flex-row overflow-hidden bg-transparent font-sans">
 
@@ -657,6 +675,7 @@ const Board = () => {
                                             onToggleLock={() => handleToggleLock(p.id)}
                                             onRemoveFromField={() => handleRemoveFromField(p.id)}
                                             isReadOnly={isReadOnly}
+                                            isDesktop={isDesktop}
                                         />
                                         {selectedPlayerId === p.id && (
                                             <div

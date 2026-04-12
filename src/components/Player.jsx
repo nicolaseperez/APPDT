@@ -3,7 +3,7 @@ import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { Lock, Unlock, X } from 'lucide-react';
 
-const ShieldIcon = ({ color, isDragging, number }) => {
+const ShieldIcon = ({ color, isDragging, number, isMobile }) => {
     // Basic mapping for tailwind colors to hex since we are using SVGs
     // Mapped to brighter/neon equivalents
     const colorMap = {
@@ -20,7 +20,7 @@ const ShieldIcon = ({ color, isDragging, number }) => {
     };
 
     const outlineColor = colorMap[color] || '#06b6d4';
-    const glowFilter = `drop-shadow(0 0 5px ${outlineColor})`;
+    const glowFilter = (isDragging || isMobile) ? 'none' : `drop-shadow(0 0 5px ${outlineColor})`;
 
     return (
         <div className={`relative transition-all duration-300 flex items-center justify-center ${isDragging ? 'scale-125 z-50' : 'group-hover:scale-110'}`}>
@@ -62,7 +62,7 @@ const ShieldIcon = ({ color, isDragging, number }) => {
     );
 };
 
-const Player = ({ id, number, name, position, color = 'bg-blue-600', isOverlay, locked, onToggleLock, onRemoveFromField, isReadOnly }) => {
+const Player = ({ id, number, name, position, color = 'bg-blue-600', isOverlay, locked, onToggleLock, onRemoveFromField, isReadOnly, isDesktop }) => {
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
         id: id,
         data: { id, number, name, color },
@@ -83,7 +83,7 @@ const Player = ({ id, number, name, position, color = 'bg-blue-600', isOverlay, 
     return (
         <div ref={setNodeRef} style={style} {...listeners} {...attributes} className={`flex flex-col items-center group ${isReadOnly ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'}`}>
             {/* Player Shield */}
-            <ShieldIcon color={color} isDragging={isDragging} number={number} />
+            <ShieldIcon color={color} isDragging={isDragging} number={number} isMobile={!isDesktop} />
 
             {/* Lock Button (Right Side) */}
             {!isOverlay && !isReadOnly && onToggleLock && (
@@ -121,9 +121,9 @@ const Player = ({ id, number, name, position, color = 'bg-blue-600', isOverlay, 
             {/* Name Label */}
             {!isOverlay && (
                 <div className={`
-                    mt-1 px-2.5 py-0.5 md:px-3 md:py-0.5 bg-slate-950/80 backdrop-blur-md rounded border border-cyan-500/40
+                    mt-1 px-2.5 py-0.5 md:px-3 md:py-0.5 bg-slate-950/80 md:backdrop-blur-md rounded border border-cyan-500/40
                     text-[8px] md:text-[10px] font-bold text-cyan-100 uppercase tracking-widest text-center whitespace-nowrap
-                    transition-opacity duration-200 shadow-[0_0_8px_rgba(6,182,212,0.3)]
+                    transition-opacity duration-200 md:shadow-[0_0_8px_rgba(6,182,212,0.3)]
                     ${isDragging ? 'opacity-0' : 'opacity-100'}
                 `}>
                     {name}
