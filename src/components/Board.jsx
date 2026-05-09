@@ -512,10 +512,20 @@ const Board = () => {
             const allBenched = [...arqsData.benched, ...defsData.benched, ...medsData.benched, ...delsData.benched];
             
             const defOrder = { 'LAT_IZQ': 1, 'DEF': 2, 'LAT_DER': 3 };
-            defs.sort((a, b) => (defOrder[a.positionType] || 2) - (defOrder[b.positionType] || 2));
+            defs.sort((a, b) => {
+                const typeDiff = (defOrder[a.positionType] || 2) - (defOrder[b.positionType] || 2);
+                if (typeDiff !== 0) return typeDiff;
+                return a.x - b.x;
+            });
             
             const medOrder = { 'VOL_IZQ': 1, 'MED': 2, 'VOL_DER': 3 };
-            meds.sort((a, b) => (medOrder[a.positionType] || 2) - (medOrder[b.positionType] || 2));
+            meds.sort((a, b) => {
+                const typeDiff = (medOrder[a.positionType] || 2) - (medOrder[b.positionType] || 2);
+                if (typeDiff !== 0) return typeDiff;
+                return a.x - b.x;
+            });
+
+            dels.sort((a, b) => a.x - b.x);
 
             const assignSlots = (playersList, slots) => {
                 return playersList.map((p, index) => {
@@ -569,7 +579,7 @@ const Board = () => {
 
     const isFormOpen = !isReadOnly && (selectedPlayerId || showAddForm);
 
-    const renderPlayerList = (list, title, isMatchSquad = false, idPrefix = 'side') => {
+    const renderPlayerList = (list, title, isMatchSquad = false, idPrefix = 'side', headerAction = null) => {
         const grouped = getGrouped(list);
         const hasPlayers = list.length > 0;
 
@@ -581,6 +591,7 @@ const Board = () => {
                         {title}
                         {hasPlayers && <span className="bg-blue-600/20 text-blue-400 px-1.5 py-0.5 rounded text-[8px]">{list.length}</span>}
                     </h4>
+                    {headerAction}
                 </div>
 
                 <div className={`
@@ -913,7 +924,23 @@ const Board = () => {
                             <span className="text-[10px] font-black text-cyan-400 uppercase tracking-widest">Jugadores Totales</span>
                             <span className="bg-cyan-500/20 text-cyan-300 px-2 py-0.5 rounded-lg text-xs font-bold border border-cyan-500/20">{players.length}</span>
                         </div>
-                        {renderPlayerList(confirmedPlayers, isReadOnly ? "Suplentes" : "Lista de Convocados", true, 'side-conf')}
+                        {renderPlayerList(
+                            confirmedPlayers, 
+                            isReadOnly ? "Suplentes" : "Lista de Convocados", 
+                            true, 
+                            'side-conf',
+                            !isReadOnly && (
+                                <button 
+                                    onClick={handleSave} 
+                                    disabled={isSaving} 
+                                    className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white p-1.5 px-3 rounded-lg transition-all active:scale-95 flex items-center gap-1.5 border border-blue-400/30"
+                                    title="Guardar Táctica"
+                                >
+                                    <Save size={12} className={isSaving ? 'animate-spin' : ''} />
+                                    <span className="text-[9px] font-bold uppercase tracking-widest">Guardar</span>
+                                </button>
+                            )
+                        )}
                         {!isReadOnly && renderPlayerList(generalPlayers, "Lista General", false, 'side-all')}
                     </div>
                 </div>
