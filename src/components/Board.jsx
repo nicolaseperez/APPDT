@@ -327,7 +327,7 @@ const Board = () => {
 
         if (isNaN(newX) || isNaN(newY)) {
             setActiveId(null);
-            if (!isDesktop) setIsSidebarCollapsed(false);
+            if (!isDesktop && isFromSidebar) setIsSidebarCollapsed(false);
             return;
         }
 
@@ -387,14 +387,15 @@ const Board = () => {
         });
 
         setActiveId(null);
-        if (!isDesktop) {
+        if (!isDesktop && isFromSidebar) {
             setIsSidebarCollapsed(false);
         }
     };
 
-    const handleDragCancel = () => {
+    const handleDragCancel = (event) => {
         setActiveId(null);
-        if (!isDesktop) {
+        const isFromSidebar = event?.active?.id && String(event.active.id).startsWith('side-');
+        if (!isDesktop && isFromSidebar) {
             setIsSidebarCollapsed(false);
         }
     };
