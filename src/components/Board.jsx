@@ -6,7 +6,7 @@ import { useMediaQuery } from '../hooks/useMediaQuery';
 import PlayerForm from './PlayerForm';
 import AuthButton from './AuthButton';
 import { useTactics } from '../hooks/useTactics';
-import { Pencil, Plus, Minus, Save, Share2, Lock, UserCheck, UserPlus, UserMinus, ChevronRight, CheckCircle2, Circle, ChevronUp, ChevronDown } from 'lucide-react';
+import { Pencil, Plus, Minus, Save, Share2, Lock, UserCheck, UserPlus, UserMinus, ChevronRight, CheckCircle2, Circle, ChevronUp, ChevronDown, RotateCcw } from 'lucide-react';
 
 const formations = {
     "4-3-3": {
@@ -179,7 +179,7 @@ const Board = () => {
         { id: 'p7', number: 7, name: 'FWD', x: 50, y: 20, color: 'bg-red-600', positionType: 'DEL', locked: false, onField: true },
     ];
 
-    const { players, setPlayers, teamColor, setTeamColor, gkColor, setGkColor, teamName, setTeamName, saveTactics, user, isReadOnly, error } = useTactics(initialPlayers);
+    const { players, setPlayers, teamColor, setTeamColor, gkColor, setGkColor, teamName, setTeamName, saveTactics, revertTactics, user, isReadOnly, error } = useTactics(initialPlayers);
 
     const [activeId, setActiveId] = useState(null);
     const [selectedPlayerId, setSelectedPlayerId] = useState(null);
@@ -793,6 +793,7 @@ const Board = () => {
                                     {user && !isReadOnly && (
                                         <>
                                             <button onClick={handleShare} className="bg-white/5 hover:bg-white/10 text-white p-2.5 rounded-xl transition-all border border-white/10 active:scale-90" title="Compartir Táctica"><Share2 size={22} /></button>
+                                            <button onClick={revertTactics} className="bg-orange-500/20 hover:bg-orange-500/30 text-orange-400 p-2.5 rounded-xl transition-all border border-orange-500/30 active:scale-90" title="Deshacer Cambios"><RotateCcw size={22} /></button>
                                             <button onClick={handleSave} disabled={isSaving} className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white p-2.5 rounded-xl transition-all active:scale-90" title="Guardar Cambios"><Save size={22} className={isSaving ? 'animate-spin' : ''} /></button>
                                         </>
                                     )}
@@ -852,6 +853,7 @@ const Board = () => {
                                 {user && !isReadOnly && (
                                     <>
                                         <button onClick={handleShare} className="bg-white/5 hover:bg-white/10 text-white p-2 rounded-xl transition-all border border-white/10 active:scale-90"><Share2 size={18} /></button>
+                                        <button onClick={revertTactics} className="bg-orange-500/20 hover:bg-orange-500/30 text-orange-400 p-2 rounded-xl transition-all border border-orange-500/30 active:scale-90" title="Deshacer Cambios"><RotateCcw size={18} /></button>
                                         <button onClick={handleSave} disabled={isSaving} className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white p-2 rounded-xl transition-all active:scale-90"><Save size={18} className={isSaving ? 'animate-spin' : ''} /></button>
                                     </>
                                 )}

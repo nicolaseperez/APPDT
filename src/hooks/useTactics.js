@@ -19,6 +19,7 @@ export function useTactics(initialPlayers) {
     const [teamName, setTeamName] = useState('MI EQUIPO');
     const [loadingConfig, setLoadingConfig] = useState(false);
     const [error, setError] = useState(null);
+    const [savedState, setSavedState] = useState(null);
 
     useEffect(() => {
         // Esperar a que Firebase Auth termine de resolver
@@ -46,6 +47,19 @@ export function useTactics(initialPlayers) {
                         isConfirmed: p.isConfirmed ?? (p.onField ?? true)
                     }));
                     setPlayers(sanitized);
+                    setSavedState({
+                        players: sanitized,
+                        teamColor: data.teamColor || 'bg-blue-600',
+                        gkColor: data.gkColor || 'bg-yellow-500',
+                        teamName: data.teamName || 'MI EQUIPO'
+                    });
+                } else {
+                    setSavedState({
+                        players: initialPlayers,
+                        teamColor: data.teamColor || 'bg-blue-600',
+                        gkColor: data.gkColor || 'bg-yellow-500',
+                        teamName: data.teamName || 'MI EQUIPO'
+                    });
                 }
                 if (data.teamColor) setTeamColor(data.teamColor);
                 if (data.gkColor) setGkColor(data.gkColor);
@@ -95,5 +109,19 @@ export function useTactics(initialPlayers) {
         }
     };
 
-    return { players, setPlayers, teamColor, setTeamColor, gkColor, setGkColor, teamName, setTeamName, saveTactics, user, isReadOnly, loadingConfig, error };
+    const revertTactics = () => {
+        if (isReadOnly) return;
+        if (savedState) {
+            if (window.confirm("¿Seguro que quieres descartar los cambios no guardados y volver a la última táctica guardada?")) {
+                setPlayers(savedState.players);
+                setTeamColor(savedState.teamColor);
+                setGkColor(savedState.gkColor);
+                setTeamName(savedState.teamName);
+            }
+        } else {
+            alert("No hay una táctica guardada previamente.");
+        }
+    };
+
+    return { players, setPlayers, teamColor, setTeamColor, gkColor, setGkColor, teamName, setTeamName, saveTactics, revertTactics, user, isReadOnly, loadingConfig, error };
 }
