@@ -282,14 +282,16 @@ const Board = () => {
         let newX, newY;
 
         if (isFromSidebar) {
-            // Get pointer coordinates, dnd-kit activatorEvent can be Mouse or Touch
-            // We use the initial coordinates and add the current delta
-            const activator = activatorEvent.touches ? activatorEvent.touches[0] : (activatorEvent.changedTouches ? activatorEvent.changedTouches[0] : activatorEvent);
-            const clientX = activator.clientX;
-            const clientY = activator.clientY;
-
-            const pointerX = clientX + delta.x;
-            const pointerY = clientY + delta.y;
+            let pointerX, pointerY;
+            if (active.rect.current.translated) {
+                const translatedRect = active.rect.current.translated;
+                pointerX = translatedRect.left + translatedRect.width / 2;
+                pointerY = translatedRect.top + translatedRect.height / 2;
+            } else {
+                const activator = activatorEvent.touches ? activatorEvent.touches[0] : (activatorEvent.changedTouches ? activatorEvent.changedTouches[0] : activatorEvent);
+                pointerX = activator.clientX + delta.x;
+                pointerY = activator.clientY + delta.y;
+            }
 
             const visualX = ((pointerX - rect.left) / rect.width) * 100;
             const visualY = ((pointerY - rect.top) / rect.height) * 100;
@@ -334,25 +336,32 @@ const Board = () => {
             const finalY = Number(Math.min(100, Math.max(0, newY)).toFixed(2));
 
             let swapTargetId = null;
-            if (isFromSidebar) {
-                let minDist = Infinity;
-                prev.forEach(p => {
-                    if (p.onField && !p.locked && p.id !== playerRealId) {
-                        // Check distance
-                        const dist = Math.sqrt(Math.pow(p.x - finalX, 2) + Math.pow(p.y - finalY, 2));
-                        if (dist < 8 && dist < minDist) { // 8% threshold for substitution
-                            minDist = dist;
-                            swapTargetId = p.id;
-                        }
+            let minDist = Infinity;
+            prev.forEach(p => {
+                if (p.onField && !p.locked && p.id !== playerRealId) {
+                    // Check distance
+                    const dist = Math.sqrt(Math.pow(p.x - finalX, 2) + Math.pow(p.y - finalY, 2));
+                    if (dist < 8 && dist < minDist) { // 8% threshold for substitution
+                        minDist = dist;
+                        swapTargetId = p.id;
                     }
-                });
-            }
+                }
+            });
 
             return prev.map(p => {
-                // Return replaced player to the exact same sidebar state
-                if (swapTargetId && p.id === swapTargetId) {
-                    return { ...p, onField: false, locked: false };
+                if (isFromSidebar) {
+                    // Return replaced player to the exact same sidebar state
+                    if (swapTargetId && p.id === swapTargetId) {
+                        return { ...p, onField: false, locked: false };
+                    }
+                } else {
+                    // Swap coordinates if both are on the field
+                    if (swapTargetId && p.id === swapTargetId) {
+                        const originalDragged = prev.find(t => t.id === playerRealId);
+                        return { ...p, x: originalDragged.x, y: originalDragged.y };
+                    }
                 }
+
                 // Set the dropped player
                 if (p.id === playerRealId) {
                     if (swapTargetId) {
